@@ -39,21 +39,42 @@ MultiwayCut::MultiwayCut(void)
 	}
 	cout << endl;
 	edge_matrix = new bool*[n_vertices]; // random true or false
+	//cout << "---- edge matrix----" << endl;
 	for (int i = 0; i < n_vertices;){
 		edge_matrix[i] = new bool[n_vertices];
+		//cout << i << ": ";
 		for (int j = 0; j <= i; j++) {
 			edge_matrix[i][j] = false;
+			//cout << setw(7) << edge_matrix[i][j] << " ";
 		}
 		for (int j = 1; j < n_vertices - i; j++) {
-			if (rand() % 2 == 0) {
+			if (rand() % 10 == 0) {
 				edge_matrix[i][j+i] = true;
+				//cout << setw(7) << edge_matrix[i][j+i] << " ";
 			}
 			else {
 				edge_matrix[i][j+i] = false;
+				//cout << setw(7) << edge_matrix[i][j + i] << " ";
 			}
 		}
-		if (check_vertex_isolated(i) == false || n_vertices == 1)
+		if (check_vertex_isolated(i) == false || n_vertices == 1 || i == n_vertices - 1) {
 			i++;
+		}
+		else{
+			delete edge_matrix[i];
+		}
+		//cout << endl;		
+	}
+	/* avoid the last vertex disconnected */ 
+	while (check_vertex_isolated(n_vertices - 1) && n_vertices != 1) {
+		for (int j = 0; j < n_vertices - 1; j++) {
+			if (rand() % 10 == 0) {
+				edge_matrix[j][n_vertices - 1] = true;
+			}
+			else {
+				edge_matrix[j][n_vertices - 1] = false;
+			}
+		}
 	}
 	cout << "---- edge matrix----" << endl;
 	for (int i = 0; i < n_vertices; i++) {

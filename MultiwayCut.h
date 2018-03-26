@@ -4,7 +4,7 @@
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
-#define NUM_OF_VERTICES 20
+#define NUM_OF_VERTICES 3
 #define WEIGHT_MAX 100
 using namespace std;
 
@@ -48,5 +48,5 @@ public:
 	void terminal_random_choice();
 
 	/* if k'th vertex has no edges return true, else return false */
-	bool check_vertex_isolated(int);
+	bool check_vertex_isolated(int k);
 };

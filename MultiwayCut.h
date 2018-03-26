@@ -1,7 +1,11 @@
 #pragma once
 #include <iostream>
 #include <ilcplex/ilocplex.h>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
+#define NUM_OF_VERTICES 20
+#define WEIGHT_MAX 100
 using namespace std;
 
 class MultiwayCut {
@@ -39,4 +43,10 @@ public:
 
 	/* wrapper rounding algorithm */
 	double rounding_alg(void);
+
+	/* choose terminals from vertices */
+	void terminal_random_choice();
+
+	/* if k'th vertex has no edges return true, else return false */
+	bool check_vertex_isolated(int);
 };

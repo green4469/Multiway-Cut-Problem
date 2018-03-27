@@ -4,7 +4,7 @@
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
-#define NUM_OF_VERTICES 3
+#define NUM_OF_VERTICES 5
 #define WEIGHT_MAX 100
 using namespace std;
 

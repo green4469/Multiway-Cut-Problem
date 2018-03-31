@@ -61,6 +61,7 @@ MultiwayCut::MultiwayCut(void)
 	}
 	cout << endl;
 	edge_matrix = new bool*[n_vertices]; // random true or false
+
 	//cout << "---- edge matrix----" << endl;
 	for (int i = 0; i < n_vertices;){
 		edge_matrix[i] = new bool[n_vertices];
@@ -87,7 +88,8 @@ MultiwayCut::MultiwayCut(void)
 		}
 		//cout << endl;		
 	}
-	/* avoid the last vertex disconnected */ 
+
+	/* avoid the last vertex disconnected */
 	while (check_vertex_isolated(n_vertices - 1) && n_vertices != 1) {
 		for (int j = 0; j < n_vertices - 1; j++) {
 			if (rand() % 10 == 0) {
@@ -103,6 +105,7 @@ MultiwayCut::MultiwayCut(void)
 		for (int j = 0; j < n_vertices; j++) {
 			cout << setw(7) << edge_matrix[i][j] << " ";
 		}
+
 		cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
 	}
 
@@ -122,7 +125,121 @@ MultiwayCut::MultiwayCut(void)
 
 double MultiwayCut::LP_solver(void)
 {
-	return 0;
+	IloEnv env;
+	/* initialize vertices */
+	IloNumVar **u = new IloNumVar*[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		u[i] = new IloNumVar[n_terminals];
+		for (int j = 0; j < n_terminals; ++j) {
+			u[i][j] = IloNumVar(env, 0, IloInfinity);
+		}
+	}
+	/* initialize L1 norms */
+	IloNumVar ***z = new IloNumVar**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		z[i] = new IloNumVar*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			z[i][j] = new IloNumVar[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				z[i][j][k] = IloNumVar(env, -IloInfinity, IloInfinity);
+			}
+		}
+	}
+	/* set ranges of terminals */
+	IloRange **terminalRanges = new IloRange*[n_terminals];
+	for (int i = 0; i < n_terminals; ++i) {
+		terminalRanges[i] = new IloRange[n_terminals];
+		for (int j = 0; j < n_terminals; ++j) {
+			if (i == j)
+				terminalRanges[i][j] = (u[terminals[i]][j] == 1.0);
+			else
+				terminalRanges[i][j] = (u[terminals[i]][j] == 0.0);
+		}
+	}
+	/* set ranges of vertices */
+	IloRange *vertexRanges = new IloRange[n_vertices];
+	IloExpr *sumVertexComponents = new IloExpr[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		sumVertexComponents[i] = IloExpr(env);
+		for (int j = 0; j < n_terminals; ++j)
+			sumVertexComponents[i] += u[i][j];
+		vertexRanges[i] = (sumVertexComponents[i] == 1.0);
+	}
+	/* set ranges of L1 norms */
+	IloRange ***l1Ranges1 = new IloRange**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges1[i] = new IloRange*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges1[i][j] = new IloRange[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges1[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges1[i][j][k].setLinearCoef(u[i][k], -1);
+				l1Ranges1[i][j][k].setLinearCoef(u[j][k], 1);
+			}
+		}
+	}
+	IloRange ***l1Ranges2 = new IloRange**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges2[i] = new IloRange*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges2[i][j] = new IloRange[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges2[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(u[i][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(u[j][k], -1);
+			}
+		}
+	}
+
+	/* objective function */
+	IloObjective obj = IloMinimize(env, 0);
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			for (int k = 0; k < n_terminals; ++k) {
+				if (this->edge_matrix[i][j] == true)
+					obj.setLinearCoef(z[i][j][k], this->weight_matrix[i][j]);
+			}
+		}
+	}
+
+	/* compile the model */
+	IloModel model(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		if (i < n_terminals) {
+			for (int j = 0; j < n_terminals; ++j) {
+				model.add(terminalRanges[i][j]);
+			}
+		}
+		model.add(vertexRanges[i]);
+		for (int j = 0; j < n_vertices; ++j) {
+			for (int k = 0; k < n_terminals; ++k) {
+				if (this->edge_matrix[i][j] == true) {
+					model.add(l1Ranges1[i][j][k]);
+					model.add(l1Ranges2[i][j][k]);
+				}
+			}
+		}
+	}
+	model.add(obj);
+
+	/* solve the model */
+	IloCplex solver(model);
+	try {
+		solver.solve();
+	}
+	catch (IloException &ex) {
+		cerr << ex << endl;
+	}
+	cout << solver.getObjValue() << endl;
+	/* save results*/
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_terminals; ++j) {
+			this->simplex_vertices[i][j] = solver.getValue(u[i][j]);
+		}
+	}
+	return solver.getObjValue();
 }
 
 double MultiwayCut::post_process(void)
@@ -183,11 +300,11 @@ double MultiwayCut::rounding_alg_exp(void)
 	free(terminal_clock);
 
 	return post_process();
+
 }
 
 double MultiwayCut::rounding_alg_dist(void)
 {
-
 	double r = (double)rand() / RAND_MAX;
 
 	for (int i = 0; i < n_vertices; i++) {

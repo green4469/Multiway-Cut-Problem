@@ -12,6 +12,7 @@
 #include <numeric>		// std::iota
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>       /* time */
 
 #define MAX_N_VERTICES 30
 #define WEIGHT_MAX 100

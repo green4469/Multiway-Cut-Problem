@@ -1,7 +1,20 @@
 #pragma once
 #include <iostream>
+#include <cstdlib>
 #include <ilcplex/ilocplex.h>
+#include <random>
+#include <string>
+#include <algorithm>    // std::random_shuffle
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib>      // std::rand, std::srand
+#include <math.h>
+#include <numeric>		// std::iota
+#include <stdio.h>
+#include <stdlib.h>
 
+#define MAX_N_VERTICES 30
+#define WEIGHT_MAX 100
 using namespace std;
 
 class MultiwayCut {
@@ -24,6 +37,13 @@ private:
 	/* input graph topology: G[n_vertices][n_vertices] */
 	bool **edge_matrix;
 
+	/* denote that each vertex assigned which terminal. in pseudo code, l(u). l[n_vertices] */
+	int *assigned_terminal;
+
+	/* upper triangle matrix with diagonal elements '0' */
+	bool **removed_edge;
+
+
 public:
 	/* Constructor */
 	MultiwayCut(void);
@@ -39,4 +59,15 @@ public:
 
 	/* wrapper rounding algorithm */
 	double rounding_alg(void);
+
+	/* choose terminals from vertices */
+	void terminal_random_choice();
+
+	/* if k'th vertex has no edges return true, else return false */
+	bool check_vertex_isolated(int k);
+
+	/* Post-processing function*/
+	double post_process(void);
 };
+
+int CompareDoubleUlps(double x, double y, int ulpsTolerance = 4);

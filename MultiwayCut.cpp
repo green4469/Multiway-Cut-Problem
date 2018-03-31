@@ -35,6 +35,7 @@ MultiwayCut::MultiwayCut(void)
 
 	///cout << "n_vertices = " << n_vertices << endl;
 	///cout << "n_terminals = " << n_terminals << endl;
+
 	weight_matrix = new double*[n_vertices]; // random,  upper triangle matrix and diagonal elements is zero
 	for (int i = 0; i < n_vertices; i++) {
 		weight_matrix[i] = new double[n_vertices];
@@ -113,6 +114,7 @@ MultiwayCut::MultiwayCut(void)
 		}
 
 		///cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
+
 	}
 
 	for (int i = 0; i < n_vertices; i++) {
@@ -193,6 +195,20 @@ double MultiwayCut::get_optimal_solution(void) {
 		}
 	}
 
+	IloRange **connectionConstraint = new IloRange*[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		connectionConstraint[i] = new IloRange[n_terminals];
+		for (int j = 0; j < n_terminals; ++j) {
+			if (this->edge_matrix[i][terminals[j]] == false && this->edge_matrix[terminals[j]][i] == false) {
+				connectionConstraint[i][j] = (l[i][j] == 0.0);
+			}
+			else {
+				connectionConstraint[i][j] = IloRange(env, -IloInfinity, IloInfinity);
+				connectionConstraint[i][j].setLinearCoef(l[i][j], 1);
+			}
+		}
+	}
+
 
 	/* objective function */
 	IloObjective obj = IloMinimize(env, 0);
@@ -204,7 +220,6 @@ double MultiwayCut::get_optimal_solution(void) {
 			}
 		}
 	}
-
 	/* compile the model */
 	IloModel model(env);
 	for (int i = 0; i < n_vertices; ++i) {
@@ -215,6 +230,13 @@ double MultiwayCut::get_optimal_solution(void) {
 					model.add(l1Ranges1[i][j][k]);
 					model.add(l1Ranges2[i][j][k]);
 				}
+			}
+		}
+	}
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_terminals; ++j) {
+			if (this->edge_matrix[i][terminals[j]] == 0 && this->edge_matrix[terminals[j]][i] == 0) {
+				model.add(connectionConstraint[i][j]);
 			}
 		}
 	}
@@ -232,11 +254,19 @@ double MultiwayCut::get_optimal_solution(void) {
 	cout << solver.getObjValue() << endl;
 	/* save results*/
 	for (int i = 0; i < n_vertices; ++i) {
+		cout << "vertex " << i << " : ";
 		for (int j = 0; j < n_terminals; ++j) {
 			this->optimal_solution[i][j] = solver.getValue(l[i][j]);
+			cout << this->optimal_solution[i][j] << ' ';
 		}
+		cout << endl;
 	}
-	return solver.getObjValue();
+	if (CompareDoubleUlps(solver.getObjValue(), 0.0) == 0) {
+		return 0.0;
+	}
+	else
+		return solver.getObjValue();
+
 }
 
 double MultiwayCut::LP_solver(void)
@@ -351,9 +381,12 @@ double MultiwayCut::LP_solver(void)
 	cout << solver.getObjValue() << endl;
 	/* save results*/
 	for (int i = 0; i < n_vertices; ++i) {
+		cout << "vertex " << i << " : ";
 		for (int j = 0; j < n_terminals; ++j) {
 			this->simplex_vertices[i][j] = solver.getValue(u[i][j]);
+			cout << this->simplex_vertices[i][j] << ' ';
 		}
+		cout << endl;
 	}
 
 	if (CompareDoubleUlps(solver.getObjValue(), 0.0) == 0) {
@@ -365,12 +398,20 @@ double MultiwayCut::LP_solver(void)
 
 double MultiwayCut::post_process(void)
 {
-	removed_edge = (bool **)malloc(sizeof(bool *) * n_vertices);
+	removed_edge = (bool **)malloc(sizeof(bool) * n_vertices * n_vertices);
 
 	for (int i = 0; i < n_vertices; i++) {
 		removed_edge[i] = (bool *)malloc(sizeof(bool) * n_vertices);
 	}
 
+	/* For each edge e(u,v), if u and v are not belonged to the same terminal, remove that edge */
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = i + 1; j < n_vertices; j++) {
+			if (edge_matrix[i][j] == true && assigned_terminal[i] != assigned_terminal[j]) {
+				removed_edge[i][j] = true;
+			}
+		}
+	}
 
 	/* For each edge e(u,v), if u and v are not belonged to the same terminal, remove that edge */
 	for (int i = 0; i < n_vertices; i++) {
@@ -403,6 +444,7 @@ double MultiwayCut::post_process(void)
 double MultiwayCut::rounding_alg_exp(void)
 {
 	cout << "Exponential Clock Algorithm" << endl;
+
 	/* Exponential Clock - Terminal sampling */
 	double *terminal_clock;
 	terminal_clock = new double[n_terminals];
@@ -423,6 +465,7 @@ double MultiwayCut::rounding_alg_exp(void)
 		for (int i = 0; i < n_terminals; ++i) {
 			if ((terminal_clock[i] / simplex_vertices[j][i]) < min) {  // Zi / ui
 				min = (terminal_clock[terminals[i]] / simplex_vertices[j][i]);  // i = terminal index, terminasl[i] = ith terminal's vertex number
+
 				assigned_terminal[j] = terminals[i];
 			}
 		}
@@ -437,6 +480,7 @@ double MultiwayCut::rounding_alg_exp(void)
 double MultiwayCut::rounding_alg_dist(void)
 {
 	cout << "Distortion Algorithm" << endl;
+
 	double r = (double)rand() / RAND_MAX;
 
 	for (int i = 0; i < n_vertices; i++) {
@@ -466,6 +510,7 @@ double MultiwayCut::rounding_alg(void)
 	double rounded_solution = 0.0;
 	double r = (double)rand() / RAND_MAX;
 	cout << "r-value : " << r << endl;
+
 
 	if (r <= 2.0 / 3.0) {
 		rounded_solution = MultiwayCut::rounding_alg_exp();

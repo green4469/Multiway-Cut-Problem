@@ -27,6 +27,12 @@ MultiwayCut::MultiwayCut(void)
 	srand(unsigned(time(0)));
 	n_vertices = (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
 	n_terminals = (rand() % n_vertices) + 1; // random 1<= x <= vertices
+
+	optimal_solution = (double **)malloc(sizeof(double *) * n_vertices);
+	for (int i = 0; i < n_vertices; i++) {
+		optimal_solution[i] = (double *)malloc(sizeof(double) * n_terminals);
+	}
+
 	cout << "n_vertices = " << n_vertices << endl;
 	cout << "n_terminals = " << n_terminals << endl;
 	weight_matrix = new double*[n_vertices]; // random,  upper triangle matrix and diagonal elements is zero

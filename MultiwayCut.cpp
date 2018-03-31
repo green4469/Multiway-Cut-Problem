@@ -77,7 +77,7 @@ MultiwayCut::MultiwayCut(void)
 			//cout << setw(7) << edge_matrix[i][j] << " ";
 		}
 		for (int j = 1; j < n_vertices - i; j++) {
-			if (rand() % 10 == 0) {
+			if (rand() % 2 == 0) {
 				edge_matrix[i][j+i] = true;
 				//cout << setw(7) << edge_matrix[i][j+i] << " ";
 			}
@@ -355,7 +355,12 @@ double MultiwayCut::LP_solver(void)
 			this->simplex_vertices[i][j] = solver.getValue(u[i][j]);
 		}
 	}
-	return solver.getObjValue();
+
+	if (CompareDoubleUlps(solver.getObjValue(), 0.0) == 0) {
+		return 0.0;
+	}
+	else
+		return solver.getObjValue();
 }
 
 double MultiwayCut::post_process(void)

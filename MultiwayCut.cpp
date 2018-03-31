@@ -123,6 +123,116 @@ MultiwayCut::MultiwayCut(void)
 	}
 }
 
+double MultiwayCut::get_optimal_solution(void) {
+	IloEnv env;
+
+	/* initialize mappings */
+	IloNumVar **l = new IloNumVar*[n_vertices];
+	for (int u = 0; u < n_vertices; ++u) {
+		l[u] = new IloNumVar[n_terminals];
+		for (int t = 0; t < n_terminals; ++t) {
+			l[u][t] = IloNumVar(env, 0, 1, IloNumVar::Int);
+
+		}
+	}
+
+	/* initialize L1 norms */
+	IloNumVar ***z = new IloNumVar**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		z[i] = new IloNumVar*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			z[i][j] = new IloNumVar[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				z[i][j][k] = IloNumVar(env, -IloInfinity, IloInfinity);
+			}
+		}
+	}
+
+
+	/* set ranges of vertices */
+	IloRange *vertexRanges = new IloRange[n_vertices];
+	IloExpr *sumVertexComponents = new IloExpr[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		sumVertexComponents[i] = IloExpr(env);
+		for (int j = 0; j < n_terminals; ++j)
+			sumVertexComponents[i] += l[i][j];
+		vertexRanges[i] = (sumVertexComponents[i] == 1.0);
+	}
+
+	/* set ranges of L1 norms */
+	IloRange ***l1Ranges1 = new IloRange**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges1[i] = new IloRange*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges1[i][j] = new IloRange[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges1[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges1[i][j][k].setLinearCoef(l[i][k], -1);
+				l1Ranges1[i][j][k].setLinearCoef(l[j][k], 1);
+			}
+		}
+	}
+	IloRange ***l1Ranges2 = new IloRange**[n_vertices];
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges2[i] = new IloRange*[n_vertices];
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges2[i][j] = new IloRange[n_terminals];
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges2[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(l[i][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(l[j][k], -1);
+			}
+		}
+	}
+
+
+	/* objective function */
+	IloObjective obj = IloMinimize(env, 0);
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			for (int k = 0; k < n_terminals; ++k) {
+				if (this->edge_matrix[i][j] == true)
+					obj.setLinearCoef(z[i][j][k], 0.5 * this->weight_matrix[i][j]);
+			}
+		}
+	}
+
+	/* compile the model */
+	IloModel model(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		model.add(vertexRanges[i]);
+		for (int j = 0; j < n_vertices; ++j) {
+			for (int k = 0; k < n_terminals; ++k) {
+				if (this->edge_matrix[i][j] == true) {
+					model.add(l1Ranges1[i][j][k]);
+					model.add(l1Ranges2[i][j][k]);
+				}
+			}
+		}
+	}
+	model.add(obj);
+
+	/* solve the model */
+	IloCplex solver(model);
+	try {
+		solver.solve();
+	}
+	catch (IloException &ex) {
+		cerr << ex << endl;
+		return -1;
+	}
+	cout << solver.getObjValue() << endl;
+	/* save results*/
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_terminals; ++j) {
+			this->optimal_solution[i][j] = solver.getValue(l[i][j]);
+		}
+	}
+	return solver.getObjValue();
+}
+
 double MultiwayCut::LP_solver(void)
 {
 	IloEnv env;

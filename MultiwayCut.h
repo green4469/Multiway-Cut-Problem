@@ -77,4 +77,4 @@ public:
 	double post_process(void);
 };
 
-int CompareDoubleUlps(double x, double y, int ulpsTolerance = 100000000000);
+int CompareDoubleUlps(double x, double y, int ulpsTolerance = 1000000);

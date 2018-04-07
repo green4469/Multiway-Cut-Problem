@@ -25,7 +25,7 @@ int CompareDoubleUlps(double x, double y, int ulpsTolerance)
 MultiwayCut::MultiwayCut(void)
 {
 	srand(unsigned(time(0)));
-	n_vertices = 1000; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
+	n_vertices = 10; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
 	n_terminals = 3; // (rand() % n_vertices) + 1; // random 1<= x <= vertices
 
 	optimal_solution = (double **)malloc(sizeof(double *) * n_vertices);
@@ -91,7 +91,7 @@ MultiwayCut::MultiwayCut(void)
 			i++;
 		}
 		else{
-			delete edge_matrix[i];
+			//delete edge_matrix[i];
 		}
 		//cout << endl;		
 	}
@@ -249,6 +249,11 @@ double MultiwayCut::get_optimal_solution(void) {
 	}
 	catch (IloException &ex) {
 		cerr << ex << endl;
+		return -1;
+	}
+	int stat = solver.getStatus();
+	if (stat != 1) {
+		cout << "solver status : " << stat << endl;
 		return -1;
 	}
 	cout << solver.getObjValue() << endl;

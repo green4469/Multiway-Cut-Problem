@@ -1,12 +1,25 @@
 #pragma once
 #include <iostream>
+#include <cstdlib>
 #include <ilcplex/ilocplex.h>
-#include <stdlib.h>     /* srand, rand */
+#include <random>
+#include <string>
+#include <algorithm>    // std::random_shuffle
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib>      // std::rand, std::srand
+#include <math.h>
+#include <numeric>		// std::iota
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>       /* time */
 
-#define NUM_OF_VERTICES 5
+#define MAX_N_VERTICES 100
 #define WEIGHT_MAX 100
 using namespace std;
+
+// input 0 : file input , 1: random sample
+#define INPUT 1
 
 class MultiwayCut {
 private:
@@ -22,15 +35,35 @@ private:
 	/* output of LP-solver, i.e. vertices on the simplex: u[n_vertices][n_terminals] */
 	double **simplex_vertices;
 
+	/* optimal solution */
+	double **optimal_solution;
+
 	/* terminal array: T[n_terminals] */
 	int *terminals;
 
 	/* input graph topology: G[n_vertices][n_vertices] */
 	bool **edge_matrix;
 
+	/* denote that each vertex assigned which terminal. in pseudo code, l(u). l[n_vertices] */
+	int *assigned_terminal;
+
+	/* upper triangle matrix with diagonal elements '0' */
+	bool **removed_edge;
+
+
 public:
 	/* Constructor */
-	MultiwayCut(void);
+	MultiwayCut(int argc, char* argv[]);
+
+	/* get n_vertices */
+	int get_n_vertices();
+
+	/* get removed edge */
+
+	bool** get_removed_edge();
+
+	/* get optimal solution */
+	double get_optimal_solution(void);
 
 	/* LP solver function */
 	double LP_solver(void);
@@ -49,4 +82,9 @@ public:
 
 	/* if k'th vertex has no edges return true, else return false */
 	bool check_vertex_isolated(int k);
+
+	/* Post-processing function*/
+	double post_process(void);
 };
+
+int CompareDoubleUlps(double x, double y, int ulpsTolerance = 1000000);

@@ -69,8 +69,8 @@ MultiwayCut::MultiwayCut(void)
 	///cout << endl;
 	edge_matrix = new bool*[n_vertices]; // random true or false
 
-										 //cout << "---- edge matrix----" << endl;
-	for (int i = 0; i < n_vertices;) {
+	//cout << "---- edge matrix----" << endl;
+	for (int i = 0; i < n_vertices;){
 		edge_matrix[i] = new bool[n_vertices];
 		//cout << i << ": ";
 		for (int j = 0; j <= i; j++) {
@@ -83,14 +83,14 @@ MultiwayCut::MultiwayCut(void)
 				//cout << setw(7) << edge_matrix[i][j+i] << " ";
 			}
 			else {
-				edge_matrix[i][j + i] = false;
+				edge_matrix[i][j+i] = false;
 				//cout << setw(7) << edge_matrix[i][j + i] << " ";
 			}
 		}
 		if (check_vertex_isolated(i) == false || n_vertices == 1 || i == n_vertices - 1) {
 			i++;
 		}
-		else {
+		else{
 			delete edge_matrix[i];
 		}
 		//cout << endl;		

@@ -327,6 +327,7 @@ double MultiwayCut::LP_solver(void)
 {
 	IloEnv env;
 	/* initialize vertices */
+	/*
 	IloNumVar **u = new IloNumVar*[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
 		u[i] = new IloNumVar[n_terminals];
@@ -334,7 +335,14 @@ double MultiwayCut::LP_solver(void)
 			u[i][j] = IloNumVar(env, 0, IloInfinity);
 		}
 	}
+	*/
+	IloArray<IloNumVarArray> u(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		u.add(IloNumVarArray(env, (IloInt) n_terminals, (IloNum)0, IloInfinity));
+	}
+
 	/* initialize L1 norms */
+	/*
 	IloNumVar ***z = new IloNumVar**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
 		z[i] = new IloNumVar*[n_vertices];
@@ -345,7 +353,17 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
+	*/
+	IloArray<IloArray<IloNumVarArray>> z(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		z.add(IloArray<IloNumVarArray>(env));
+		for (int j = 0; j < n_vertices; ++j) {
+			z[i].add(IloNumVarArray(env, (IloInt)n_terminals, 0, IloInfinity));
+		}
+	}
+
 	/* set ranges of terminals */
+	/*
 	IloRange **terminalRanges = new IloRange*[n_terminals];
 	for (int i = 0; i < n_terminals; ++i) {
 		terminalRanges[i] = new IloRange[n_terminals];
@@ -356,7 +374,20 @@ double MultiwayCut::LP_solver(void)
 				terminalRanges[i][j] = (u[terminals[i]][j] == 0.0);
 		}
 	}
+	*/
+	IloArray<IloRangeArray> terminalRanges(env);
+	for (int i = 0; i < n_terminals; ++i) {
+		terminalRanges.add(IloRangeArray(env));
+		for (int j = 0; j < n_terminals; ++j) {
+			if (i == j)
+				terminalRanges[i].add(u[this->terminals[i]][j] == 1.0);
+			else
+				terminalRanges[i].add(u[this->terminals[i]][j] == 0.0);
+		}
+	}
+
 	/* set ranges of vertices */
+	/*
 	IloRange *vertexRanges = new IloRange[n_vertices];
 	IloExpr *sumVertexComponents = new IloExpr[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
@@ -365,7 +396,18 @@ double MultiwayCut::LP_solver(void)
 			sumVertexComponents[i] += u[i][j];
 		vertexRanges[i] = (sumVertexComponents[i] == 1.0);
 	}
+	*/
+	IloRangeArray vertexRanges(env);
+	IloExprArray sumVertexComponents(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		sumVertexComponents.add(IloExpr(env));
+		for (int j = 0; j < n_terminals; ++j)
+			sumVertexComponents[i] += u[i][j];
+		vertexRanges.add(sumVertexComponents[i] == 1.0);
+	}
+
 	/* set ranges of L1 norms */
+	/*
 	IloRange ***l1Ranges1 = new IloRange**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
 		l1Ranges1[i] = new IloRange*[n_vertices];
@@ -379,6 +421,21 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
+	*/
+	IloArray<IloArray<IloRangeArray>> l1Ranges1(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges1.add(IloArray<IloRangeArray>(env));
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges1[i].add(IloRangeArray(env));
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges1[i][j].add(IloRange(env, 0, IloInfinity));
+				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges1[i][j][k].setLinearCoef(u[i][k], -1);
+				l1Ranges1[i][j][k].setLinearCoef(u[j][k], 1);
+			}
+		}
+	}
+	/*
 	IloRange ***l1Ranges2 = new IloRange**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
 		l1Ranges2[i] = new IloRange*[n_vertices];
@@ -392,7 +449,20 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
-
+	*/
+	IloArray<IloArray<IloRangeArray>> l1Ranges1(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges1.add(IloArray<IloRangeArray>(env));
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges1[i].add(IloRangeArray(env));
+			for (int k = 0; k < n_terminals; ++k) {
+				l1Ranges1[i][j].add(IloRange(env, 0, IloInfinity));
+				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges1[i][j][k].setLinearCoef(u[i][k], 1);
+				l1Ranges1[i][j][k].setLinearCoef(u[j][k], -1);
+			}
+		}
+	}
 	/* objective function */
 	IloObjective obj = IloMinimize(env, 0);
 	for (int i = 0; i < n_vertices; ++i) {
@@ -406,6 +476,7 @@ double MultiwayCut::LP_solver(void)
 
 	/* compile the model */
 	IloModel model(env);
+	/*
 	for (int i = 0; i < n_vertices; ++i) {
 		if (i < n_terminals) {
 			for (int j = 0; j < n_terminals; ++j) {
@@ -422,6 +493,11 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
+	*/
+	model.add(terminalRanges);
+	model.add(vertexRanges);
+	model.add(l1Ranges);
+	model.add(l2Ranges);
 	model.add(obj);
 
 	/* solve the model */

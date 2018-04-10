@@ -32,7 +32,7 @@ private:
 	/* output of LP-solver, i.e. vertices on the simplex: u[n_vertices][n_terminals] */
 	double **simplex_vertices;
 
-	/* optimal solution */
+	/* optimal solution [n_vertices][n_terminals]*/
 	double **optimal_solution;
 
 	/* terminal array: T[n_terminals] */
@@ -51,6 +51,9 @@ private:
 public:
 	/* Constructor */
 	MultiwayCut(void);
+
+	/* Deconstructor */
+	~MultiwayCut(void);
 
 	/* get optimal solution */
 	double get_optimal_solution(void);

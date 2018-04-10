@@ -28,9 +28,9 @@ MultiwayCut::MultiwayCut(void)
 	n_vertices = 10; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
 	n_terminals = 3; // (rand() % n_vertices) + 1; // random 1<= x <= vertices
 
-	optimal_solution = (double **)malloc(sizeof(double *) * n_vertices);
+	optimal_solution = new double*[n_vertices];
 	for (int i = 0; i < n_vertices; i++) {
-		optimal_solution[i] = (double *)malloc(sizeof(double) * n_terminals);
+		optimal_solution[i] = new double[n_terminals];
 	}
 
 	///cout << "n_vertices = " << n_vertices << endl;
@@ -91,7 +91,7 @@ MultiwayCut::MultiwayCut(void)
 			i++;
 		}
 		else{
-			//delete edge_matrix[i];
+			delete edge_matrix[i];
 		}
 		//cout << endl;		
 	}
@@ -129,6 +129,55 @@ MultiwayCut::MultiwayCut(void)
 		}
 		///cout << endl;
 	}
+
+	/* memory allocation of assigned_terminal */
+	assigned_terminal = new int[n_vertices];
+
+	/* memory allocation of removed_edge */
+	removed_edge = new bool*[n_vertices];
+	for (int i = 0; i < n_vertices; i++) {
+		removed_edge[i] = new bool[n_vertices];
+	}
+
+}
+
+MultiwayCut::~MultiwayCut()
+{
+	/* memory deallocation of weight_matrix */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] weight_matrix[i];
+	}
+	delete[] weight_matrix;
+
+	/* memory deallocation of simplex_vertices */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] simplex_vertices[i];
+	}
+	delete[] simplex_vertices;
+
+	/* memory deallocation of optimal_solution */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] optimal_solution[i];
+	}
+	delete[] optimal_solution;
+
+	/* memory deallocation of terminals */
+	delete terminals;
+
+	/* memory deallocation of edge_matrix */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] edge_matrix[i];
+	}
+	delete[] edge_matrix;
+
+	/* memory deallocation of assigned_terminal */
+	delete assigned_terminal;
+
+	/* memory deallocation of removed_edge */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] removed_edge[i];
+	}
+	delete[] removed_edge;
 }
 
 double MultiwayCut::get_optimal_solution(void) {
@@ -404,12 +453,6 @@ double MultiwayCut::LP_solver(void)
 
 double MultiwayCut::post_process(void)
 {
-	removed_edge = (bool **)malloc(sizeof(bool) * n_vertices * n_vertices);
-
-	for (int i = 0; i < n_vertices; i++) {
-		removed_edge[i] = (bool *)malloc(sizeof(bool) * n_vertices);
-	}
-
 	/* For each edge e(u,v), if u and v are not belonged to the same terminal, remove that edge */
 	for (int i = 0; i < n_vertices; i++) {
 		for (int j = i + 1; j < n_vertices; j++) {
@@ -442,8 +485,6 @@ double MultiwayCut::post_process(void)
 		}
 	}
 
-	//free(assigned_terminal);
-	//free(removed_edge);
 	return sum;
 }
 
@@ -459,8 +500,6 @@ double MultiwayCut::rounding_alg_exp(void)
 
 	for (int i = 0; i < n_terminals; ++i) {  // i for terminals
 		std::exponential_distribution<double> distribution(1.0);
-		//double number = distribution(generator);
-		//exponential_clock[i] = y_i*exp(double(-1 * y_i*number));
 		terminal_clock[i] = distribution(generator);  // terminal_clock[terminals[i]] denotes ith terminal's exponential clock, terminal[i] denotes ith terminal
 	}
 
@@ -477,8 +516,7 @@ double MultiwayCut::rounding_alg_exp(void)
 		}
 	}
 
-	//free(terminal_clock);
-
+	delete terminal_clock;
 	return post_process();
 
 }
@@ -511,8 +549,6 @@ double MultiwayCut::rounding_alg_dist(void)
 
 double MultiwayCut::rounding_alg(void)
 {
-
-	assigned_terminal = (int *)malloc(sizeof(int) * n_vertices);
 	double rounded_solution = 0.0;
 	double r = (double)rand() / RAND_MAX;
 	cout << "r-value : " << r << endl;

@@ -138,6 +138,12 @@ MultiwayCut::MultiwayCut(void)
 		removed_edge[i] = new bool[n_vertices];
 	}
 
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			removed_edge[i][j] = 0;
+		}
+	}
+
 }
 
 MultiwayCut::~MultiwayCut()

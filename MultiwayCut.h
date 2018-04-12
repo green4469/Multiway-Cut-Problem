@@ -13,13 +13,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>       /* time */
+#include <fstream>
 
 #define MAX_N_VERTICES 100
 #define WEIGHT_MAX 100
 using namespace std;
 
 class MultiwayCut {
-private:
+public:
+//private:
 	/* the # of vertices of input graph G */
 	int n_vertices;
 
@@ -48,7 +50,7 @@ private:
 	bool **removed_edge;
 
 
-public:
+//public:
 	/* Constructor */
 	MultiwayCut(void);
 

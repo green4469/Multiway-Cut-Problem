@@ -450,16 +450,16 @@ double MultiwayCut::LP_solver(void)
 		}
 	}
 	*/
-	IloArray<IloArray<IloRangeArray>> l1Ranges1(env);
+	IloArray<IloArray<IloRangeArray>> l1Ranges2(env);
 	for (int i = 0; i < n_vertices; ++i) {
-		l1Ranges1.add(IloArray<IloRangeArray>(env));
+		l1Ranges2.add(IloArray<IloRangeArray>(env));
 		for (int j = 0; j < n_vertices; ++j) {
-			l1Ranges1[i].add(IloRangeArray(env));
+			l1Ranges2[i].add(IloRangeArray(env));
 			for (int k = 0; k < n_terminals; ++k) {
-				l1Ranges1[i][j].add(IloRange(env, 0, IloInfinity));
-				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
-				l1Ranges1[i][j][k].setLinearCoef(u[i][k], 1);
-				l1Ranges1[i][j][k].setLinearCoef(u[j][k], -1);
+				l1Ranges2[i][j].add(IloRange(env, 0, IloInfinity));
+				l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(u[i][k], 1);
+				l1Ranges2[i][j][k].setLinearCoef(u[j][k], -1);
 			}
 		}
 	}
@@ -476,7 +476,7 @@ double MultiwayCut::LP_solver(void)
 
 	/* compile the model */
 	IloModel model(env);
-	/*
+	
 	for (int i = 0; i < n_vertices; ++i) {
 		if (i < n_terminals) {
 			for (int j = 0; j < n_terminals; ++j) {
@@ -493,11 +493,11 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
-	*/
-	model.add(terminalRanges);
-	model.add(vertexRanges);
-	model.add(l1Ranges);
-	model.add(l2Ranges);
+	
+	//model.add(terminalRanges);
+	//model.add(vertexRanges);
+	//model.add(l1Ranges1);
+	//model.add(l1Ranges2);
 	model.add(obj);
 
 	/* solve the model */
@@ -519,12 +519,51 @@ double MultiwayCut::LP_solver(void)
 		}
 		cout << endl;
 	}
-
-	if (CompareDoubleUlps(solver.getObjValue(), 0.0) == 0) {
+	double objval = solver.getObjValue();
+	/* delete all arrays (u, z, terminalRanges, vertexRanges, l1Ranges1, l1Ranges2)*/
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges1[i][j].endElements();
+		}
+		l1Ranges1[i].endElements();
+	}
+	l1Ranges1.endElements();
+	l1Ranges1.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges2[i][j].endElements();
+		}
+		l1Ranges2[i].endElements();
+	}
+	l1Ranges2.endElements();
+	l1Ranges2.end();
+	vertexRanges.endElements();
+	sumVertexComponents.endElements();
+	vertexRanges.end();
+	sumVertexComponents.end();
+	for (int i = 0; i < n_terminals; ++i) {
+		terminalRanges[i].endElements());
+	}
+	terminalRanges.endElements();
+	terminalRanges.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			z[i][j].endElements();
+		}
+		z[i].endElements();
+	}
+	z.endElements();
+	z.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		u[i].endElements();
+	}
+	u.endElements();
+	u.end();
+	if (CompareDoubleUlps(objval, 0.0) == 0) {
 		return 0.0;
 	}
 	else
-		return solver.getObjValue();
+		return objval;
 }
 
 double MultiwayCut::post_process(void)

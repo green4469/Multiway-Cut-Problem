@@ -34,6 +34,7 @@ string replace_all(
 );
 bool check_array_all_true(bool arr[], int array_size);
 bool check_num_in_group(vector<int> group, int n);
+void MakeDirectory(string full_path);
 int main(void) {
 	srand(unsigned(NULL));
 	int num_of_files;
@@ -42,9 +43,15 @@ int main(void) {
 	cout << "파일 시작 번호: ";
 	int start_num;
 	cin >> start_num;
+	cout << "vertex 최소 갯수: ";
+	int vertex_min;
+	cin >> vertex_min;
+	cout << "vertex 최대 갯수: ";
+	int vertex_max;
+	cin >> vertex_max;
 	for (int i = start_num; i < start_num + num_of_files; i++) {
-		srand(unsigned(NULL)+(i+1)*(rand()%7));
-		string out_file = ".\\MCP_IN\\MCP_IN_";
+		srand(unsigned(NULL));
+		string out_file = "MCP_IN\\MCP_IN_";
 		string number;
 		if (i / 10 == 0) {
 			number = "000" + to_string(i);
@@ -59,8 +66,8 @@ int main(void) {
 			number = to_string(i);
 		}
 		out_file.append(number).append(".TXT");
-
-		n_vertices = (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
+		
+		n_vertices = (rand() % (vertex_max - vertex_min + 1 )) + vertex_min; // random 1<= x <= 1000
 		n_terminals = (rand() % n_vertices) + 1; // random 1<= x <= vertices
 
 		cout << "n_vertices = " << n_vertices << endl;
@@ -162,6 +169,7 @@ int main(void) {
 			cout << endl;
 		}
 
+		MakeDirectory(out_file);
 		ofstream out(out_file);
 		out << n_vertices << endl;
 		out << n_terminals << endl;
@@ -325,4 +333,18 @@ string replace_all(
 	}
 
 	return result;
+}
+
+void MakeDirectory(string full_path)
+{
+	string strDirPath;
+	string strTempDir;
+	int indexOf = 0;
+	while (true) {
+		indexOf = strDirPath.find("\\");
+		strTempDir += strDirPath.substr(0, indexOf) + "\\";
+		CreateDirectory(strTempDir.c_str(),NULL);
+		strDirPath = strDirPath.substr(indexOf + 1, strDirPath.length());
+		if (indexOf < 0) break;
+	}
 }

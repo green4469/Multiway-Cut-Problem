@@ -326,6 +326,7 @@ double MultiwayCut::get_optimal_solution(void) {
 double MultiwayCut::LP_solver(void)
 {
 	IloEnv env;
+	env.setDeleter(IloSafeDeleterMode);
 	/* initialize vertices */
 	/*
 	IloNumVar **u = new IloNumVar*[n_vertices];

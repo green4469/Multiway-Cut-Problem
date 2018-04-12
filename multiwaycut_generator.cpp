@@ -49,6 +49,12 @@ int main(void) {
 	cout << "vertex ÃÖ´ë °¹¼ö: ";
 	int vertex_max;
 	cin >> vertex_max;
+	cout << "edge weight ÃÖ¼Ú°ª: ";
+	double weight_min;
+	cin >> weight_min;
+	cout << "edge weight ÃÖ´ñ°ª: ";
+	double weight_max;
+	cin >> weight_max;
 	for (int i = start_num; i < start_num + num_of_files; i++) {
 		srand(unsigned(NULL));
 		string out_file = "MCP_IN\\MCP_IN_";
@@ -81,7 +87,7 @@ int main(void) {
 				weight_matrix[i][j] = 0;
 			}
 			for (int j = 1; j < n_vertices - i; j++) {
-				weight_matrix[i][j + i] = ((double)rand() / RAND_MAX) * WEIGHT_MAX;
+				weight_matrix[i][j + i] = ((double)rand() / RAND_MAX) * (weight_max - weight_min) + weight_min;
 			}
 		}
 		cout << "---- weight matrix ----" << endl;

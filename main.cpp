@@ -1,36 +1,66 @@
 #include "MultiwayCut.h"
-string replace_all(
-	__in const std::string &message,
-	__in const std::string &pattern,
-	__in const std::string &replace
-);
-int main(int argc, char* argv[]) { // argv : file name (ex: MCP_IN_0001.txt)
+
+int main(void) {
 	double LP;
 	double RS;
-	string out_file;
-	out_file = argv[1];
-	out_file = replace_all(out_file,"IN", "OUT");
-	ofstream out(out_file);
+	int iteration = 0;
+
+	ofstream of("output.txt");
+
 	/* loop until different between relaxed solution & rounded solution	*/
-	//do {
-		MultiwayCut a(argc, argv);
-		LP = a.LP_solver();
-		RS = a.rounding_alg();
+	do {
+		srand((unsigned)time(NULL) + (unsigned)iteration * 10);
+		cout << ++iteration << "th case" << endl << endl;
+		MultiwayCut *a = new MultiwayCut;
+		LP = a->LP_solver();
+		RS = a->rounding_alg();
+
+		if (CompareDoubleUlps(LP, RS) != 0) {
+			of << "LP's objective value : " << LP << endl;
+			of << "Rounded objective value : " << RS << endl;
+			of << "Weight Matrix" << endl;
+			for (int i = 0; i < a->n_vertices; i++) {
+				for (int j = 0; j < a->n_vertices; j++) {
+					of << a->weight_matrix[i][j] << '\t';
+				}
+				of << endl;
+			}
+
+			of << "Edge Matrix" << endl;
+			for (int i = 0; i < a->n_vertices; i++) {
+				for (int j = 0; j < a->n_vertices; j++) {
+					of << a->edge_matrix[i][j] << '\t';
+				}
+				of << endl;
+			}
+
+			of << "Removed edge " << endl;
+			for (int i = 0; i < a->n_vertices; i++) {
+				for (int j = 0; j < a->n_vertices; j++) {
+					of << a->removed_edge[i][j] << '\t';
+				}
+				of << endl;
+			}
+
+			of << "assigned terminal (lu) " << endl;
+			for (int i = 0; i < a->n_vertices; i++) {
+				of << a->assigned_terminal[i] << '\t';
+			}
+			of << endl;
+
+			of << "Terminals" << endl;
+			for (int i = 0; i < a->n_terminals; i++) {
+				of << a->terminals[i] << '\t';
+			}
+			of << endl;
+		}
+
 		cout << "relaxed_solution: " << LP << endl;
 		//cout << "optimal_solution: " << a.get_optimal_solution() << endl;
 		cout << "rounded_solution: " << RS << endl;
-	//} while (CompareDoubleUlps(LP,RS) == 0);
-		out << LP << "," << RS;
-		int n_vertices = a.get_n_vertices();
-		bool** removed_edge = a.get_removed_edge();
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				if (removed_edge[i][j] == true) {
-					out << "," << i << "-" << j;
-				}
-			}
-		}
-		out << endl;
+		delete a;
+	} while (CompareDoubleUlps(LP,RS) == 0);
+
 	/*
 	MultiwayCut a;
 	LP = a.LP_solver();
@@ -41,23 +71,4 @@ int main(int argc, char* argv[]) { // argv : file name (ex: MCP_IN_0001.txt)
 
 	//cout << "Different!" << endl;
 	return 0;
-}
-
-string replace_all(
-	__in const std::string &message,
-	__in const std::string &pattern,
-	__in const std::string &replace
-) {
-
-	std::string result = message;
-	std::string::size_type pos = 0;
-	std::string::size_type offset = 0;
-
-	while ((pos = result.find(pattern, offset)) != std::string::npos)
-	{
-		result.replace(result.begin() + pos, result.begin() + pos + pattern.size(), replace);
-		offset = pos + replace.size();
-	}
-
-	return result;
 }

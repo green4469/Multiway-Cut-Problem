@@ -13,16 +13,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>       /* time */
+#include <fstream>
 
 #define MAX_N_VERTICES 100
 #define WEIGHT_MAX 100
 using namespace std;
 
-// input 0 : file input , 1: random sample
-#define INPUT 1
-
 class MultiwayCut {
-private:
+public:
+//private:
 	/* the # of vertices of input graph G */
 	int n_vertices;
 
@@ -35,7 +34,7 @@ private:
 	/* output of LP-solver, i.e. vertices on the simplex: u[n_vertices][n_terminals] */
 	double **simplex_vertices;
 
-	/* optimal solution */
+	/* optimal solution [n_vertices][n_terminals]*/
 	double **optimal_solution;
 
 	/* terminal array: T[n_terminals] */
@@ -51,19 +50,12 @@ private:
 	bool **removed_edge;
 
 
-public:
+//public:
 	/* Constructor */
-	MultiwayCut(int argc, char* argv[]);
+	MultiwayCut(void);
 
-	/* get n_vertices */
-	int get_n_vertices();
-
-	/* get removed edge */
-
-	bool** get_removed_edge();
-
-	/* get optimal solution */
-	double get_optimal_solution(void);
+	/* Deconstructor */
+	~MultiwayCut(void);
 
 	/* LP solver function */
 	double LP_solver(void);

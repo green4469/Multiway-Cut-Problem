@@ -22,426 +22,310 @@ int CompareDoubleUlps(double x, double y, int ulpsTolerance)
 	return (diff > 0) ? 1 : -1;
 }
 
-MultiwayCut::MultiwayCut(int argc, char* argv[])
+MultiwayCut::MultiwayCut(void)
 {
-	optimal_solution = (double **)malloc(sizeof(double *) * n_vertices);
+	n_vertices = 10; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
+	n_terminals = 3; // (rand() % n_vertices) + 1; // random 1<= x <= vertices
+
+	optimal_solution = new double*[n_vertices];
 	for (int i = 0; i < n_vertices; i++) {
-		optimal_solution[i] = (double *)malloc(sizeof(double) * n_terminals);
+		optimal_solution[i] = new double[n_terminals];
 	}
-	
-	bool check = false;
-	switch (argc) {
-	case 1: // random sample
-		srand(unsigned(time(0)));
-		n_vertices = 6; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
-		n_terminals = 3; // (rand() % n_vertices) + 1; // random 1<= x <= vertices
 
-		cout << "n_vertices = " << n_vertices << endl;
-		cout << "n_terminals = " << n_terminals << endl;
+	///cout << "n_vertices = " << n_vertices << endl;
+	///cout << "n_terminals = " << n_terminals << endl;
 
-		weight_matrix = new double*[n_vertices]; // random,  upper triangle matrix and diagonal elements is zero
-		for (int i = 0; i < n_vertices; i++) {
-			weight_matrix[i] = new double[n_vertices];
-			for (int j = 0; j <= i; j++) {
-				weight_matrix[i][j] = 0;
-			}
-			for (int j = 1; j < n_vertices - i; j++) {
-				weight_matrix[i][j + i] = ((double)rand() / RAND_MAX) * WEIGHT_MAX;
-			}
+	weight_matrix = new double*[n_vertices]; // random,  upper triangle matrix and diagonal elements is zero
+	for (int i = 0; i < n_vertices; i++) {
+		weight_matrix[i] = new double[n_vertices];
+		for (int j = 0; j <= i; j++) {
+			weight_matrix[i][j] = 0;
 		}
-		cout << "---- weight matrix ----" << endl;
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				cout << setw(7) << weight_matrix[i][j] << " ";
-			}
-			cout << endl;
-		}
-
-		cout << "terminals index : ";
-		terminals = new int[n_terminals]; // indices of vertices
-		terminal_random_choice(); // assign indices of vertices to terminals
-		for (int i = 0; i < n_terminals; i++) {
-			cout << terminals[i] << " ";
-		}
-		cout << endl;
-
-		edge_matrix = new bool*[n_vertices]; // random true or false
-		//cout << "---- edge matrix----" << endl;
-		for (int i = 0; i < n_vertices;) {
-			if (check == false)
-				edge_matrix[i] = new bool[n_vertices];
-			else
-				check = false;
-			///cout << i << ": ";
-			for (int j = 0; j <= i; j++) {
-				edge_matrix[i][j] = false;
-				///cout << setw(7) << edge_matrix[i][j] << " ";
-			}
-			for (int j = 1; j < n_vertices - i; j++) {
-				if (rand() % 2 == 0) {
-					edge_matrix[i][j + i] = true;
-					///cout << setw(7) << edge_matrix[i][j+i] << " ";
-				}
-				else {
-					edge_matrix[i][j + i] = false;
-					///cout << setw(7) << edge_matrix[i][j + i] << " ";
-				}
-			}
-			if (check_vertex_isolated(i) == false || n_vertices == 1 || i == n_vertices - 1) {
-				i++;
-			}
-			else {
-				//delete edge_matrix[i];
-				check = true;
-			}
-			///cout << endl;		
-		}
-
-		/* avoid the last vertex disconnected */
-		while (check_vertex_isolated(n_vertices - 1) && n_vertices != 1) {
-			for (int j = 0; j < n_vertices - 1; j++) {
-				if (rand() % 10 == 0) {
-					edge_matrix[j][n_vertices - 1] = true;
-				}
-				else {
-					edge_matrix[j][n_vertices - 1] = false;
-				}
-			}
-		}
-
-		simplex_vertices = new double*[n_vertices]; // initialize 0
-		for (int i = 0; i < n_vertices; i++) {
-			simplex_vertices[i] = new double[n_terminals];
-			for (int j = 0; j < n_terminals; j++) {
-				simplex_vertices[i][j] = 0;
-			}
-		}
-
-		///cout << "---- edge matrix----" << endl;
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				cout << setw(7) << edge_matrix[i][j] << " ";
-			}
-			cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
-
-		}
-
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				weight_matrix[i][j] *= edge_matrix[i][j];
-			}
-		}
-		cout << "---- modified weight matrix ---" << endl;
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				cout << setw(7) << weight_matrix[i][j] << " ";
-			}
-			cout << endl;
-		}
-		break;
-
-	case 2: // file input
-		ifstream in(argv[1]);
-		//FILE * fp = fopen(argv[0], "r");
-		in >> n_vertices;
-		in >> n_terminals;
-		cout << "n_vertices = " << n_vertices << endl;
-		cout << "n_terminals = " << n_terminals << endl;
-		int t;
-		vector<int> temp;
-		for (int i = 0; i < n_terminals; i++){
-			in >> t;
-			temp.push_back(t);
-			//cout << "t: " << t << ", " << temp[i] << endl;
-		}
-
-		
-		cout << "terminals index : ";
-		terminals = new int[n_terminals]; // indices of vertices
-		terminal_random_choice(); // assign indices of vertices to terminals
-		for (int i = 0; i < n_terminals; i++) {
-			terminals[i] = temp[i];
-			cout << terminals[i] << " ";
-		}
-		cout << endl;
-		//make weight_matrix filled 0
-		weight_matrix = new double*[n_vertices]; // initialize 0
-		for (int i = 0; i < n_vertices; i++) {
-			weight_matrix[i] = new double[n_vertices];
-			for (int j = 0; j < n_vertices; j++) {
-				weight_matrix[i][j] = 0;
-			}
-		}
-		int v1, v2;
-		double w;
-		
-		while (in){
-			in >> v1 >> v2 >> w;
-			if (v1 < v2) {
-				weight_matrix[v1][v2] = w;
-			}
-			else {
-				weight_matrix[v2][v1] = w;
-			}
-		}
-		///cout << "---- weight matrix ----" << endl;
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				cout << setw(7) << weight_matrix[i][j] << " ";
-			}
-			cout << endl;
-		}
-
-		terminals = new int[n_terminals];
-		for (int i = 0; i < n_terminals; i++) {
-			terminals[i] = temp[i];
-		}
-
-		simplex_vertices = new double*[n_vertices]; // initialize 0
-		for (int i = 0; i < n_vertices; i++) {
-			simplex_vertices[i] = new double[n_terminals];
-			for (int j = 0; j < n_terminals; j++) {
-				simplex_vertices[i][j] = 0;
-			}
-		}
-
-		edge_matrix = new bool*[n_vertices]; // random true or false
-		cout << "---- edge matrix----" << endl;
-		for (int i = 0; i < n_vertices; i++) {
-			edge_matrix[i] = new bool[n_vertices];
-			//cout << i << ": ";
-			for (int j = 0; j < n_vertices; j++) {
-				if (weight_matrix[i][j] != 0)
-					edge_matrix[i][j] = true;
-				else
-					edge_matrix[i][j] = false;
-				//cout << setw(7) << edge_matrix[i][j] << " ";
-			}
-			cout << endl;
-		}
-		for (int i = 0; i < n_vertices; i++) {
-			for (int j = 0; j < n_vertices; j++) {
-				cout << setw(7) << edge_matrix[i][j] << " ";
-			}
-			cout << " ( " << check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
+		for (int j = 1; j < n_vertices - i; j++) {
+			weight_matrix[i][j + i] = ((double)rand() / RAND_MAX) * WEIGHT_MAX;
 		}
 	}
+	///cout << "---- weight matrix ----" << endl;
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			///cout << setw(7) << weight_matrix[i][j] << " ";
+		}
+		///cout << endl;
+	}
+	simplex_vertices = new double*[n_vertices]; // initialize 0
+	for (int i = 0; i < n_vertices; i++) {
+		simplex_vertices[i] = new double[n_terminals];
+		for (int j = 0; j < n_terminals; j++) {
+			simplex_vertices[i][j] = 0;
+		}
+	}
+	///cout << "terminals index : ";
+	terminals = new int[n_terminals]; // indices of vertices
+	terminal_random_choice(); // assign indices of vertices to terminals
+	for (int i = 0; i < n_terminals; i++) {
+		///cout << terminals[i] << " ";
+	}
+	///cout << endl;
+	edge_matrix = new bool*[n_vertices]; // random true or false
+
+	//cout << "---- edge matrix----" << endl;
+	for (int i = 0; i < n_vertices;){
+		edge_matrix[i] = new bool[n_vertices];
+		//cout << i << ": ";
+		for (int j = 0; j <= i; j++) {
+			edge_matrix[i][j] = false;
+			//cout << setw(7) << edge_matrix[i][j] << " ";
+		}
+		for (int j = 1; j < n_vertices - i; j++) {
+			if (rand() % 2 == 0) {
+				edge_matrix[i][j+i] = true;
+				//cout << setw(7) << edge_matrix[i][j+i] << " ";
+			}
+			else {
+				edge_matrix[i][j+i] = false;
+				//cout << setw(7) << edge_matrix[i][j + i] << " ";
+			}
+		}
+		if (check_vertex_isolated(i) == false || n_vertices == 1 || i == n_vertices - 1) {
+			i++;
+		}
+		else{
+			delete edge_matrix[i];
+		}
+		//cout << endl;		
+	}
+
+	/* avoid the last vertex disconnected */
+	while (check_vertex_isolated(n_vertices - 1) && n_vertices != 1) {
+		for (int j = 0; j < n_vertices - 1; j++) {
+			if (rand() % 10 == 0) {
+				edge_matrix[j][n_vertices - 1] = true;
+			}
+			else {
+				edge_matrix[j][n_vertices - 1] = false;
+			}
+		}
+	}
+	///cout << "---- edge matrix----" << endl;
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			///cout << setw(7) << edge_matrix[i][j] << " ";
+		}
+
+		///cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
+
+	}
+
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			weight_matrix[i][j] *= edge_matrix[i][j];
+		}
+	}
+	///cout << "---- modified weight matrix ---" << endl;
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			///cout << setw(7) << weight_matrix[i][j] << " ";
+		}
+		///cout << endl;
+	}
+
+	/* memory allocation of assigned_terminal */
+	assigned_terminal = new int[n_vertices];
+
+	/* memory allocation of removed_edge */
+	removed_edge = new bool*[n_vertices];
+	for (int i = 0; i < n_vertices; i++) {
+		removed_edge[i] = new bool[n_vertices];
+	}
+
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			removed_edge[i][j] = 0;
+		}
+	}
+
 }
 
-double MultiwayCut::get_optimal_solution(void) {
-	IloEnv env;
+MultiwayCut::~MultiwayCut()
+{
+	/* memory deallocation of weight_matrix */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] weight_matrix[i];
+	}
+	delete[] weight_matrix;
 
-	/* initialize mappings */
-	IloNumVar **l = new IloNumVar*[n_vertices];
-	for (int u = 0; u < n_vertices; ++u) {
-		l[u] = new IloNumVar[n_terminals];
-		for (int t = 0; t < n_terminals; ++t) {
-			l[u][t] = IloNumVar(env, 0, 1, IloNumVar::Int);
+	/* memory deallocation of simplex_vertices */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] simplex_vertices[i];
+	}
+	delete[] simplex_vertices;
 
-		}
+	/* memory deallocation of optimal_solution */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] optimal_solution[i];
 	}
+	delete[] optimal_solution;
 
-	/* initialize L1 norms */
-	IloNumVar ***z = new IloNumVar**[n_vertices];
-	for (int i = 0; i < n_vertices; ++i) {
-		z[i] = new IloNumVar*[n_vertices];
-		for (int j = 0; j < n_vertices; ++j) {
-			z[i][j] = new IloNumVar[n_terminals];
-			for (int k = 0; k < n_terminals; ++k) {
-				z[i][j][k] = IloNumVar(env, -IloInfinity, IloInfinity);
-			}
-		}
-	}
+	/* memory deallocation of terminals */
+	delete terminals;
 
+	/* memory deallocation of edge_matrix */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] edge_matrix[i];
+	}
+	delete[] edge_matrix;
 
-	/* set ranges of vertices */
-	IloRange *vertexRanges = new IloRange[n_vertices];
-	IloExpr *sumVertexComponents = new IloExpr[n_vertices];
-	for (int i = 0; i < n_vertices; ++i) {
-		sumVertexComponents[i] = IloExpr(env);
-		for (int j = 0; j < n_terminals; ++j)
-			sumVertexComponents[i] += l[i][j];
-		vertexRanges[i] = (sumVertexComponents[i] == 1.0);
-	}
+	/* memory deallocation of assigned_terminal */
+	delete assigned_terminal;
 
-	/* set ranges of L1 norms */
-	IloRange ***l1Ranges1 = new IloRange**[n_vertices];
-	for (int i = 0; i < n_vertices; ++i) {
-		l1Ranges1[i] = new IloRange*[n_vertices];
-		for (int j = 0; j < n_vertices; ++j) {
-			l1Ranges1[i][j] = new IloRange[n_terminals];
-			for (int k = 0; k < n_terminals; ++k) {
-				l1Ranges1[i][j][k] = IloRange(env, 0, IloInfinity);
-				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
-				l1Ranges1[i][j][k].setLinearCoef(l[i][k], -1);
-				l1Ranges1[i][j][k].setLinearCoef(l[j][k], 1);
-			}
-		}
+	/* memory deallocation of removed_edge */
+	for (int i = 0; i < n_vertices; i++) {
+		delete[] removed_edge[i];
 	}
-	IloRange ***l1Ranges2 = new IloRange**[n_vertices];
-	for (int i = 0; i < n_vertices; ++i) {
-		l1Ranges2[i] = new IloRange*[n_vertices];
-		for (int j = 0; j < n_vertices; ++j) {
-			l1Ranges2[i][j] = new IloRange[n_terminals];
-			for (int k = 0; k < n_terminals; ++k) {
-				l1Ranges2[i][j][k] = IloRange(env, 0, IloInfinity);
-				l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
-				l1Ranges2[i][j][k].setLinearCoef(l[i][k], 1);
-				l1Ranges2[i][j][k].setLinearCoef(l[j][k], -1);
-			}
-		}
-	}
-
-	IloRange **connectionConstraint = new IloRange*[n_vertices];
-	for (int i = 0; i < n_vertices; ++i) {
-		connectionConstraint[i] = new IloRange[n_terminals];
-		for (int j = 0; j < n_terminals; ++j) {
-			if (this->edge_matrix[i][terminals[j]] == false && this->edge_matrix[terminals[j]][i] == false) {
-				connectionConstraint[i][j] = (l[i][j] == 0.0);
-			}
-			else {
-				connectionConstraint[i][j] = IloRange(env, -IloInfinity, IloInfinity);
-				connectionConstraint[i][j].setLinearCoef(l[i][j], 1);
-			}
-		}
-	}
-
-
-	/* objective function */
-	IloObjective obj = IloMinimize(env, 0);
-	for (int i = 0; i < n_vertices; ++i) {
-		for (int j = 0; j < n_vertices; ++j) {
-			for (int k = 0; k < n_terminals; ++k) {
-				if (this->edge_matrix[i][j] == true)
-					obj.setLinearCoef(z[i][j][k], 0.5 * this->weight_matrix[i][j]);
-			}
-		}
-	}
-	/* compile the model */
-	IloModel model(env);
-	for (int i = 0; i < n_vertices; ++i) {
-		model.add(vertexRanges[i]);
-		for (int j = 0; j < n_vertices; ++j) {
-			for (int k = 0; k < n_terminals; ++k) {
-				if (this->edge_matrix[i][j] == true) {
-					model.add(l1Ranges1[i][j][k]);
-					model.add(l1Ranges2[i][j][k]);
-				}
-			}
-		}
-	}
-	for (int i = 0; i < n_vertices; ++i) {
-		for (int j = 0; j < n_terminals; ++j) {
-			if (this->edge_matrix[i][terminals[j]] == 0 && this->edge_matrix[terminals[j]][i] == 0) {
-				model.add(connectionConstraint[i][j]);
-			}
-		}
-	}
-	model.add(obj);
-
-	/* solve the model */
-	IloCplex solver(model);
-	try {
-		solver.solve();
-	}
-	catch (IloException &ex) {
-		cerr << ex << endl;
-		return -1;
-	}
-	int stat = solver.getStatus();
-	if (stat != 1) {
-		cout << "solver status : " << stat << endl;
-		return -1;
-	}
-	cout << solver.getObjValue() << endl;
-	/* save results*/
-	for (int i = 0; i < n_vertices; ++i) {
-		cout << "vertex " << i << " : ";
-		for (int j = 0; j < n_terminals; ++j) {
-			this->optimal_solution[i][j] = solver.getValue(l[i][j]);
-			cout << this->optimal_solution[i][j] << ' ';
-		}
-		cout << endl;
-	}
-	if (CompareDoubleUlps(solver.getObjValue(), 0.0) <=0) {
-		return 0.0;
-	}
-	else
-		return solver.getObjValue();
-
+	delete[] removed_edge;
 }
 
 double MultiwayCut::LP_solver(void)
 {
 	IloEnv env;
+	env.setDeleter(IloSafeDeleterMode);
 	/* initialize vertices */
+	/*
 	IloNumVar **u = new IloNumVar*[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
-		u[i] = new IloNumVar[n_terminals];
-		for (int j = 0; j < n_terminals; ++j) {
-			u[i][j] = IloNumVar(env, 0, IloInfinity);
-		}
+	u[i] = new IloNumVar[n_terminals];
+	for (int j = 0; j < n_terminals; ++j) {
+	u[i][j] = IloNumVar(env, 0, IloInfinity);
 	}
+	}
+	*/
+	IloArray<IloNumVarArray> u(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		u.add(IloNumVarArray(env, (IloInt)n_terminals, (IloNum)0, IloInfinity));
+	}
+
 	/* initialize L1 norms */
+	/*
 	IloNumVar ***z = new IloNumVar**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
-		z[i] = new IloNumVar*[n_vertices];
+	z[i] = new IloNumVar*[n_vertices];
+	for (int j = 0; j < n_vertices; ++j) {
+	z[i][j] = new IloNumVar[n_terminals];
+	for (int k = 0; k < n_terminals; ++k) {
+	z[i][j][k] = IloNumVar(env, -IloInfinity, IloInfinity);
+	}
+	}
+	}
+	*/
+	IloArray<IloArray<IloNumVarArray>> z(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		z.add(IloArray<IloNumVarArray>(env));
 		for (int j = 0; j < n_vertices; ++j) {
-			z[i][j] = new IloNumVar[n_terminals];
-			for (int k = 0; k < n_terminals; ++k) {
-				z[i][j][k] = IloNumVar(env, -IloInfinity, IloInfinity);
-			}
+			z[i].add(IloNumVarArray(env, (IloInt)n_terminals, 0, IloInfinity));
 		}
 	}
+
 	/* set ranges of terminals */
+	/*
 	IloRange **terminalRanges = new IloRange*[n_terminals];
 	for (int i = 0; i < n_terminals; ++i) {
-		terminalRanges[i] = new IloRange[n_terminals];
+	terminalRanges[i] = new IloRange[n_terminals];
+	for (int j = 0; j < n_terminals; ++j) {
+	if (i == j)
+	terminalRanges[i][j] = (u[terminals[i]][j] == 1.0);
+	else
+	terminalRanges[i][j] = (u[terminals[i]][j] == 0.0);
+	}
+	}
+	*/
+	IloArray<IloRangeArray> terminalRanges(env);
+	for (int i = 0; i < n_terminals; ++i) {
+		terminalRanges.add(IloRangeArray(env));
 		for (int j = 0; j < n_terminals; ++j) {
 			if (i == j)
-				terminalRanges[i][j] = (u[terminals[i]][j] == 1.0);
+				terminalRanges[i].add(u[this->terminals[i]][j] == 1.0);
 			else
-				terminalRanges[i][j] = (u[terminals[i]][j] == 0.0);
+				terminalRanges[i].add(u[this->terminals[i]][j] == 0.0);
 		}
 	}
+
 	/* set ranges of vertices */
+	/*
 	IloRange *vertexRanges = new IloRange[n_vertices];
 	IloExpr *sumVertexComponents = new IloExpr[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
-		sumVertexComponents[i] = IloExpr(env);
+	sumVertexComponents[i] = IloExpr(env);
+	for (int j = 0; j < n_terminals; ++j)
+	sumVertexComponents[i] += u[i][j];
+	vertexRanges[i] = (sumVertexComponents[i] == 1.0);
+	}
+	*/
+	IloRangeArray vertexRanges(env);
+	IloExprArray sumVertexComponents(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		sumVertexComponents.add(IloExpr(env));
 		for (int j = 0; j < n_terminals; ++j)
 			sumVertexComponents[i] += u[i][j];
-		vertexRanges[i] = (sumVertexComponents[i] == 1.0);
+		vertexRanges.add(sumVertexComponents[i] == 1.0);
 	}
+
 	/* set ranges of L1 norms */
+	/*
 	IloRange ***l1Ranges1 = new IloRange**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
-		l1Ranges1[i] = new IloRange*[n_vertices];
+	l1Ranges1[i] = new IloRange*[n_vertices];
+	for (int j = 0; j < n_vertices; ++j) {
+	l1Ranges1[i][j] = new IloRange[n_terminals];
+	for (int k = 0; k < n_terminals; ++k) {
+	l1Ranges1[i][j][k] = IloRange(env, 0, IloInfinity);
+	l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
+	l1Ranges1[i][j][k].setLinearCoef(u[i][k], -1);
+	l1Ranges1[i][j][k].setLinearCoef(u[j][k], 1);
+	}
+	}
+	}
+	*/
+	IloArray<IloArray<IloRangeArray>> l1Ranges1(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges1.add(IloArray<IloRangeArray>(env));
 		for (int j = 0; j < n_vertices; ++j) {
-			l1Ranges1[i][j] = new IloRange[n_terminals];
+			l1Ranges1[i].add(IloRangeArray(env));
 			for (int k = 0; k < n_terminals; ++k) {
-				l1Ranges1[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges1[i][j].add(IloRange(env, 0, IloInfinity));
 				l1Ranges1[i][j][k].setLinearCoef(z[i][j][k], 1);
 				l1Ranges1[i][j][k].setLinearCoef(u[i][k], -1);
 				l1Ranges1[i][j][k].setLinearCoef(u[j][k], 1);
 			}
 		}
 	}
+	/*
 	IloRange ***l1Ranges2 = new IloRange**[n_vertices];
 	for (int i = 0; i < n_vertices; ++i) {
-		l1Ranges2[i] = new IloRange*[n_vertices];
+	l1Ranges2[i] = new IloRange*[n_vertices];
+	for (int j = 0; j < n_vertices; ++j) {
+	l1Ranges2[i][j] = new IloRange[n_terminals];
+	for (int k = 0; k < n_terminals; ++k) {
+	l1Ranges2[i][j][k] = IloRange(env, 0, IloInfinity);
+	l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
+	l1Ranges2[i][j][k].setLinearCoef(u[i][k], 1);
+	l1Ranges2[i][j][k].setLinearCoef(u[j][k], -1);
+	}
+	}
+	}
+	*/
+	IloArray<IloArray<IloRangeArray>> l1Ranges2(env);
+	for (int i = 0; i < n_vertices; ++i) {
+		l1Ranges2.add(IloArray<IloRangeArray>(env));
 		for (int j = 0; j < n_vertices; ++j) {
-			l1Ranges2[i][j] = new IloRange[n_terminals];
+			l1Ranges2[i].add(IloRangeArray(env));
 			for (int k = 0; k < n_terminals; ++k) {
-				l1Ranges2[i][j][k] = IloRange(env, 0, IloInfinity);
+				l1Ranges2[i][j].add(IloRange(env, 0, IloInfinity));
 				l1Ranges2[i][j][k].setLinearCoef(z[i][j][k], 1);
 				l1Ranges2[i][j][k].setLinearCoef(u[i][k], 1);
 				l1Ranges2[i][j][k].setLinearCoef(u[j][k], -1);
 			}
 		}
 	}
-
-
 	/* objective function */
 	IloObjective obj = IloMinimize(env, 0);
 	for (int i = 0; i < n_vertices; ++i) {
@@ -455,6 +339,7 @@ double MultiwayCut::LP_solver(void)
 
 	/* compile the model */
 	IloModel model(env);
+
 	for (int i = 0; i < n_vertices; ++i) {
 		if (i < n_terminals) {
 			for (int j = 0; j < n_terminals; ++j) {
@@ -471,6 +356,11 @@ double MultiwayCut::LP_solver(void)
 			}
 		}
 	}
+
+	//model.add(terminalRanges);
+	//model.add(vertexRanges);
+	//model.add(l1Ranges1);
+	//model.add(l1Ranges2);
 	model.add(obj);
 
 	/* solve the model */
@@ -492,25 +382,53 @@ double MultiwayCut::LP_solver(void)
 		}
 		cout << endl;
 	}
-
-	if (CompareDoubleUlps(solver.getObjValue(), 0.0) == 0) {
+	double objval = solver.getObjValue();
+	/* delete the model and the objective */
+	solver.end();
+	model.end();
+	obj.end();
+	/* delete all arrays (u, z, terminalRanges, vertexRanges, l1Ranges1, l1Ranges2)*/
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			//l1Ranges1[i][j].endElements();
+			l1Ranges1[i][j].end();
+		}
+		l1Ranges1[i].end();
+	}
+	l1Ranges1.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			l1Ranges2[i][j].end();
+		}
+		l1Ranges2[i].end();
+	}
+	l1Ranges2.end();
+	vertexRanges.end();
+	sumVertexComponents.end();
+	for (int i = 0; i < n_terminals; ++i) {
+		terminalRanges[i].end();
+	}
+	terminalRanges.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		for (int j = 0; j < n_vertices; ++j) {
+			z[i][j].end();
+		}
+		z[i].end();
+	}
+	z.end();
+	for (int i = 0; i < n_vertices; ++i) {
+		u[i].end();
+	}
+	u.end();
+	env.end();
+	if (CompareDoubleUlps(objval, 0.0) == 0) {
 		return 0.0;
 	}
 	else
-		return solver.getObjValue();
+		return objval;
 }
-
 double MultiwayCut::post_process(void)
 {
-	removed_edge = (bool **)malloc(sizeof(bool) * n_vertices * n_vertices);
-
-	for (int i = 0; i < n_vertices; i++) {
-		removed_edge[i] = (bool *)malloc(sizeof(bool) * n_vertices);
-		for (int j = 0; j < n_vertices; j++) {
-			removed_edge[i][j] = false;
-		}
-	}
-
 	/* For each edge e(u,v), if u and v are not belonged to the same terminal, remove that edge */
 	for (int i = 0; i < n_vertices; i++) {
 		for (int j = i + 1; j < n_vertices; j++) {
@@ -543,8 +461,6 @@ double MultiwayCut::post_process(void)
 		}
 	}
 
-	//free(assigned_terminal);
-	//free(removed_edge);
 	return sum;
 }
 
@@ -560,8 +476,6 @@ double MultiwayCut::rounding_alg_exp(void)
 
 	for (int i = 0; i < n_terminals; ++i) {  // i for terminals
 		std::exponential_distribution<double> distribution(1.0);
-		//double number = distribution(generator);
-		//exponential_clock[i] = y_i*exp(double(-1 * y_i*number));
 		terminal_clock[i] = distribution(generator);  // terminal_clock[terminals[i]] denotes ith terminal's exponential clock, terminal[i] denotes ith terminal
 	}
 
@@ -578,8 +492,7 @@ double MultiwayCut::rounding_alg_exp(void)
 		}
 	}
 
-	//free(terminal_clock);
-
+	delete terminal_clock;
 	return post_process();
 
 }
@@ -612,8 +525,6 @@ double MultiwayCut::rounding_alg_dist(void)
 
 double MultiwayCut::rounding_alg(void)
 {
-
-	assigned_terminal = (int *)malloc(sizeof(int) * n_vertices);
 	double rounded_solution = 0.0;
 	double r = (double)rand() / RAND_MAX;
 	cout << "r-value : " << r << endl;
@@ -648,6 +559,7 @@ void MultiwayCut::terminal_random_choice() {
 			j++;
 		}
 	}
+	delete check;
 }
 
 bool MultiwayCut::check_vertex_isolated(int k) {
@@ -667,12 +579,4 @@ bool MultiwayCut::check_vertex_isolated(int k) {
 		}
 	}
 	return false;
-}
-
-int MultiwayCut::get_n_vertices() {
-	return n_vertices;
-}
-
-bool** MultiwayCut::get_removed_edge() {
-	return removed_edge;
 }

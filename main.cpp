@@ -6,6 +6,7 @@ int main(void) {
 	int iteration = 0;
 	/* loop until different between relaxed solution & rounded solution	*/
 	do {
+		srand((unsigned)time(NULL) + (unsigned)iteration * 10);
 		cout << ++iteration << "th case" << endl << endl;
 		MultiwayCut *a = new MultiwayCut;
 		LP = a->LP_solver();

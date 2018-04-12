@@ -55,9 +55,6 @@ public:
 	/* Deconstructor */
 	~MultiwayCut(void);
 
-	/* get optimal solution */
-	double get_optimal_solution(void);
-
 	/* LP solver function */
 	double LP_solver(void);
 

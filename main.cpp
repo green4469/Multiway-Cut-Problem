@@ -51,7 +51,7 @@ int main(void) {
 
 		double duality_gap;
 		if (CompareDoubleUlps(LP, 0) == 0 && CompareDoubleUlps(RS, 0) == 0)
-			duality_gap = 0;
+			duality_gap = 1;
 		else
 			duality_gap = RS / LP;
 		fout << a->n_vertices << "," << a->n_terminals << "," << duality_gap << endl;

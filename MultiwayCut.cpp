@@ -220,13 +220,13 @@ MultiwayCut::MultiwayCut(string file)
 	}
 
 
-	cout << "---- edge matrix----" << endl;
+	//cout << "---- edge matrix----" << endl;
 	for (int i = 0; i < n_vertices; i++) {
 		for (int j = 0; j < n_vertices; j++) {
-			cout << setw(7) << edge_matrix[i][j] << " ";
+			//cout << setw(7) << edge_matrix[i][j] << " ";
 		}
 
-		cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
+		//cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
 
 	}
 
@@ -475,15 +475,15 @@ double MultiwayCut::LP_solver(void)
 		cerr << ex << endl;
 		return -1;
 	}
-	cout << solver.getObjValue() << endl;
+	//cout << solver.getObjValue() << endl;
 	/* save results*/
 	for (int i = 0; i < n_vertices; ++i) {
-		cout << "vertex " << i << " : ";
+		//cout << "vertex " << i << " : ";
 		for (int j = 0; j < n_terminals; ++j) {
 			this->simplex_vertices[i][j] = solver.getValue(u[i][j]);
-			cout << this->simplex_vertices[i][j] << ' ';
+			//cout << this->simplex_vertices[i][j] << ' ';
 		}
-		cout << endl;
+		//cout << endl;
 	}
 	double objval = solver.getObjValue();
 	/* delete the model and the objective */
@@ -569,7 +569,7 @@ double MultiwayCut::post_process(void)
 
 double MultiwayCut::rounding_alg_exp(void)
 {
-	cout << "Exponential Clock Algorithm" << endl;
+	//cout << "Exponential Clock Algorithm" << endl;
 
 	/* Exponential Clock - Terminal sampling */
 	double *terminal_clock;
@@ -602,7 +602,7 @@ double MultiwayCut::rounding_alg_exp(void)
 
 double MultiwayCut::rounding_alg_dist(void)
 {
-	cout << "Distortion Algorithm" << endl;
+	//cout << "Distortion Algorithm" << endl;
 
 	double r = (double)rand() / RAND_MAX;
 
@@ -630,7 +630,7 @@ double MultiwayCut::rounding_alg(void)
 {
 	double rounded_solution = 0.0;
 	double r = (double)rand() / RAND_MAX;
-	cout << "r-value : " << r << endl;
+	//cout << "r-value : " << r << endl;
 
 
 	if (r <= 2.0 / 3.0) {

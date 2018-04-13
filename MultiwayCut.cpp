@@ -69,7 +69,7 @@ MultiwayCut::MultiwayCut(void)
 	edge_matrix = new bool*[n_vertices]; // random true or false
 
 	//cout << "---- edge matrix----" << endl;
-	for (int i = 0; i < n_vertices;){
+	for (int i = 0; i < n_vertices; i++){
 		edge_matrix[i] = new bool[n_vertices];
 		//cout << i << ": ";
 		for (int j = 0; j <= i; j++) {
@@ -86,16 +86,31 @@ MultiwayCut::MultiwayCut(void)
 				//cout << setw(7) << edge_matrix[i][j + i] << " ";
 			}
 		}
+		/*
 		if (check_vertex_isolated(i) == false || n_vertices == 1 || i == n_vertices - 1) {
 			i++;
 		}
 		else{
 			delete edge_matrix[i];
-		}
+		}*/
 		//cout << endl;		
 	}
-
+	vector<int>* group = new vector<int>[n_vertices];
+	for (int i = 0; i < group[0].size(); i++) {
+		//cout << group[0][i] << " ";
+	}
+	//cout << endl;
+	grouping(group, n_vertices);
+	for (int i = 0; i < group[0].size(); i++) {
+		//cout << group[0][i] << " ";
+	}
+	//cout << endl;
+	make_one_graph(group);
+	for (int i = 0; i < group[0].size(); i++) {
+		//cout << group[0][i] << " ";
+	}
 	/* avoid the last vertex disconnected */
+	/*
 	while (check_vertex_isolated(n_vertices - 1) && n_vertices != 1) {
 		for (int j = 0; j < n_vertices - 1; j++) {
 			if (rand() % 10 == 0) {
@@ -105,7 +120,7 @@ MultiwayCut::MultiwayCut(void)
 				edge_matrix[j][n_vertices - 1] = false;
 			}
 		}
-	}
+	}*/
 	///cout << "---- edge matrix----" << endl;
 	for (int i = 0; i < n_vertices; i++) {
 		for (int j = 0; j < n_vertices; j++) {
@@ -573,11 +588,11 @@ double MultiwayCut::rounding_alg_exp(void)
 
 	/* Exponential Clock - Terminal sampling */
 	double *terminal_clock;
-	terminal_clock = new double[n_terminals];
+	terminal_clock = new double[n_vertices];
 	/* generation of the expoential clocks of the terminals */
 	std::default_random_engine generator;
 
-	for (int i = 0; i < n_terminals; ++i) {  // i for terminals
+	for (int i = 0; i < n_vertices; ++i) {  // i for terminals
 		std::exponential_distribution<double> distribution(1.0);
 		terminal_clock[i] = distribution(generator);  // terminal_clock[terminals[i]] denotes ith terminal's exponential clock, terminal[i] denotes ith terminal
 	}

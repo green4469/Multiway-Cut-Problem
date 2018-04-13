@@ -11,50 +11,93 @@ int main(void) {
 	double RS;
 	int iteration = 0;
 
-	ofstream fout("output.txt");
-	int num_of_files;
-	cout << "The number of files: ";
-	cin >> num_of_files;
-	cout << "The start number of files: ";
-	int start_num;
-	cin >> start_num;
-	/* loop until different between relaxed solution & rounded solution	*/
-	for(int i = 0; i < num_of_files; i++){
+	int file_num = -1;
+	while(true){
+		ifstream fin;
 		string in_file = "MCP_IN\\MCP_IN_";
+		file_num++;
 		string number;
-		if (i / 10 == 0) {
-			number = "000" + to_string(i);
+		if (file_num / 10 == 0) {
+			number = "000" + to_string(file_num);
 		}
-		else if (i / 100 == 0) {
-			number = "00" + to_string(i);
+		else if (file_num / 100 == 0) {
+			number = "00" + to_string(file_num);
 		}
-		else if (i / 1000 == 0) {
-			number = "0" + to_string(i);
+		else if (file_num / 1000 == 0) {
+			number = "0" + to_string(file_num);
 		}
 		else {
-			number = to_string(i);
+			number = to_string(file_num);
 		}
 		in_file.append(number).append(".TXT");
-		string out_file = "MCP_OUT\\MCP_OUT.TXT";
-		//out_file = in_file;
+		fin.open(in_file, ifstream::in);
+		if (fin.fail() == true)
+			break;
+	}
+
+	/* loop until different between relaxed solution & rounded solution	*/
+	do {
+		string in_file = "MCP_IN\\MCP_IN_";
+		string number;
+		if (file_num / 10 == 0) {
+			number = "000" + to_string(file_num);
+		}
+		else if (file_num / 100 == 0) {
+			number = "00" + to_string(file_num);
+		}
+		else if (file_num / 1000 == 0) {
+			number = "0" + to_string(file_num);
+		}
+		else {
+			number = to_string(file_num);
+		}
+		in_file.append(number).append(".TXT");
+		string out_file_summary = "MCP_OUT\\MCP_OUT.TXT";
+		//string out_file = in_file;
 		//out_file = replace_all(out_file, "IN", "OUT");
-		ofstream fout(out_file,ofstream::out | ofstream::app);
+		string out_file = "MCP_OUT\\MCP_OUT_EDGE_CUT.TXT";
 		srand((unsigned)time(NULL) + (unsigned)iteration * 10);
 		cout << ++iteration << "th case" << endl << endl;
 		MultiwayCut *a;
-		if(in_file.size() > 0)
-			a = new MultiwayCut(in_file);
-		else
-			a = new MultiwayCut();
+		a = new MultiwayCut();
+		cout << ++iteration << "constructor" << endl << endl;
 		LP = a->LP_solver();
 		RS = a->rounding_alg();
-
-		double duality_gap;
-		if (CompareDoubleUlps(LP, 0) == 0 && CompareDoubleUlps(RS, 0) == 0)
-			duality_gap = 1;
-		else
+		
+		if (CompareDoubleUlps(LP, RS) != 0) {
+			ofstream fout_result(out_file, ofstream::out | ofstream::app);
+			ofstream fout_one(in_file);
+			ofstream fout_summary(out_file_summary, ofstream::out | ofstream::app);
+			double duality_gap;
 			duality_gap = RS / LP;
-		fout << a->n_vertices << "," << a->n_terminals << "," << duality_gap << endl;
+			/* summary file */
+			fout_summary << file_num << "," << a->n_vertices << "," << a->n_terminals << "," << duality_gap << endl;
+			/* each input file */
+			fout_one << a->n_vertices << endl;
+			fout_one << a->n_terminals << endl;
+			for (int i = 0; i < a->n_terminals; i++) {
+				fout_one << a->terminals[i] << " ";
+			}
+			fout_one << endl;
+			for (int i = 0; i < a->n_vertices; i++) {
+				for (int j = 0; j < a->n_vertices; j++) {
+					if (a->weight_matrix[i][j] != 0) {
+						fout_one << i << " " << j << " " << a->weight_matrix[i][j] << endl;
+					}
+				}
+			}
+			/* result file */
+			fout_result << file_num << "," << LP << "," << RS << "," << RS / LP;
+			for (int i = 0; i < a->n_vertices; i++) {
+				for (int j = 0; j < a->n_vertices; j++) {
+					if (a->removed_edge[i][j] == true) {
+						fout_result << "," << i << "-" << j;
+					}
+				}
+			}
+			fout_result << endl;
+			file_num++;
+		}
 
 		/*
 		if (CompareDoubleUlps(LP, RS) != 0) {
@@ -102,7 +145,7 @@ int main(void) {
 		//cout << "optimal_solution: " << a.get_optimal_solution() << endl;
 		cout << "rounded_solution: " << RS << endl;
 		delete a;
-	}
+	} while (1);// CompareDoubleUlps(LP, RS) == 0);
 
 	/*
 	MultiwayCut a;

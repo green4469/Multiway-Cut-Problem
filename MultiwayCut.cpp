@@ -24,8 +24,8 @@ int CompareDoubleUlps(double x, double y, int ulpsTolerance)
 
 MultiwayCut::MultiwayCut(void)
 {
-	n_vertices = 10; // (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
-	n_terminals = 3; // (rand() % n_vertices) + 1; // random 1<= x <= vertices
+	n_vertices =  (rand() % MAX_N_VERTICES) + 1; // random 1<= x <= 1000
+	n_terminals = (rand() % n_vertices) + 1; // random 1<= x <= vertices
 
 	optimal_solution = new double*[n_vertices];
 	for (int i = 0; i < n_vertices; i++) {
@@ -678,6 +678,90 @@ bool MultiwayCut::check_vertex_isolated(int k) {
 				break;
 		}
 		if (j == k) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void MultiwayCut::grouping(vector<int>* group, int n_vertices) {
+	bool *check;
+	int group_number = 0;
+	check = new bool[n_vertices];
+	for (int i = 0; i < n_vertices; i++) {
+		check[i] = false;
+	}
+	check[0] = true;
+	vector<int> one_group_queue;
+	for (int i = 0; i < n_vertices; i++) {
+		if (check_array_all_true(check, n_vertices))
+			break;
+		group[group_number].push_back(i);
+		for (int j = 0; j < n_vertices; j++) {
+			if (check[j] == false && edge_matrix[i][j] == 1) {
+				group[group_number].push_back(j);
+				check[j] = true;
+				one_group_queue.push_back(j);
+			}
+		}
+		while (one_group_queue.size() != 0) {
+			int vertex = one_group_queue.back();
+			one_group_queue.pop_back();
+			for (int j = 0; j < n_vertices; j++) {
+				if (check[j] == false && edge_matrix[vertex][j] == 1) {
+					group[group_number].push_back(j);
+					check[j] = true;
+					one_group_queue.push_back(j);
+				}
+			}
+		}
+		group_number++;
+	}
+	delete check;
+}
+
+bool MultiwayCut::check_array_all_true(bool arr[], int array_size) {
+	for (int i = 0; i < array_size; i++) {
+		if (arr[i] == false) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void MultiwayCut::make_one_graph(vector<int>* group) {
+	srand(time(NULL));
+	for (int i = 1; i < n_vertices; i++) {
+		bool check_connect = false;
+		if (group[i].size() != 0) {
+			do {
+				for (int j = 0; j < group[0].size(); j++) {
+					for (int k = 0; k < group[i].size(); k++) {
+						if (rand() % 10 == 0) {
+							if (group[0][j] < group[i][k]) {
+								edge_matrix[group[0][j]][group[i][k]] = 1;
+							}
+							else {
+								edge_matrix[group[i][k]][group[0][j]] = 1;
+							}
+							check_connect = true;
+						}
+					}
+				}
+			} while (check_connect == false);
+			for (int j = 0; j < group[i].size(); j++) {
+				if (!check_num_in_group(group[0], group[i][j]))
+					group[0].push_back(group[i][j]);
+			}
+		}
+	}
+	return;
+}
+
+bool MultiwayCut::check_num_in_group(vector<int> group, int n) {
+	bool check = false;
+	for (int i = 0; i < group.size(); i++) {
+		if (group[i] == n) {
 			return true;
 		}
 	}

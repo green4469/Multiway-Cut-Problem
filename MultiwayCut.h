@@ -78,6 +78,13 @@ public:
 
 	/* Post-processing function*/
 	double post_process(void);
+
+
+	void grouping(vector<int>* group, int n_vertices);
+	bool check_array_all_true(bool arr[], int array_size);
+	void make_one_graph(vector<int>* group);
+	bool check_num_in_group(vector<int> group, int n);
 };
 
 int CompareDoubleUlps(double x, double y, int ulpsTolerance = 1000000);
+int multiway_cut_generator(int i, int vertex_max, int vertex_min, int weight_max, int weight_min);

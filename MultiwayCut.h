@@ -53,6 +53,7 @@ public:
 //public:
 	/* Constructor */
 	MultiwayCut(void);
+	MultiwayCut(string);
 
 	/* Deconstructor */
 	~MultiwayCut(void);

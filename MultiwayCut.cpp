@@ -146,6 +146,109 @@ MultiwayCut::MultiwayCut(void)
 
 }
 
+
+MultiwayCut::MultiwayCut(string file)
+{
+	ifstream fin(file);
+	
+	fin >> n_vertices;
+	fin >> n_terminals;
+	///cout << "n_vertices = " << n_vertices << endl;
+	///cout << "n_terminals = " << n_terminals << endl;
+
+	terminals = new int[n_terminals]; // indices of vertices
+	//terminal_random_choice(); // assign indices of vertices to terminals
+	for (int i = 0; i < n_terminals; i++) {
+		fin >> terminals[i];
+		///cout << terminals[i] << " ";
+	}
+	///cout << endl;
+
+	optimal_solution = new double*[n_vertices];
+	for (int i = 0; i < n_vertices; i++) {
+		optimal_solution[i] = new double[n_terminals];
+	}
+
+	//make weight_matrix filled 0
+	weight_matrix = new double*[n_vertices]; // initialize 0
+	for (int i = 0; i < n_vertices; i++) {
+		weight_matrix[i] = new double[n_vertices];
+		for (int j = 0; j < n_vertices; j++) {
+			weight_matrix[i][j] = 0;
+		}
+	}
+	int v1, v2;
+	double w;
+
+	while (!fin.eof()) {
+		fin >> v1 >> v2 >> w;
+		if (v1 < v2) {
+			weight_matrix[v1][v2] = w;
+		}
+		else {
+			weight_matrix[v2][v1] = w;
+		}
+	}
+	///cout << "---- weight matrix ----" << endl;
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			///cout << setw(7) << weight_matrix[i][j] << " ";
+		}
+		///cout << endl;
+	}
+	simplex_vertices = new double*[n_vertices]; // initialize 0
+	for (int i = 0; i < n_vertices; i++) {
+		simplex_vertices[i] = new double[n_terminals];
+		for (int j = 0; j < n_terminals; j++) {
+			simplex_vertices[i][j] = 0;
+		}
+	}
+	///cout << "terminals index : ";
+
+	edge_matrix = new bool*[n_vertices]; // random true or false
+	for (int i = 0; i < n_vertices; i++) {
+		edge_matrix[i] = new bool[n_vertices];
+		//cout << i << ": ";
+		for (int j = 0; j < n_vertices; j++) {
+			if (weight_matrix[i][j] != 0)
+				edge_matrix[i][j] = true;
+			else
+				edge_matrix[i][j] = false;
+			//cout << setw(7) << edge_matrix[i][j] << " ";
+		}
+		//cout << endl;
+	}
+
+
+	cout << "---- edge matrix----" << endl;
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			cout << setw(7) << edge_matrix[i][j] << " ";
+		}
+
+		cout <<" ( "<< check_vertex_isolated(i) << " <==  1-isolated, 0-connected)" << endl;
+
+	}
+
+	/* memory allocation of assigned_terminal */
+	assigned_terminal = new int[n_vertices];
+
+	/* memory allocation of removed_edge */
+	removed_edge = new bool*[n_vertices];
+	for (int i = 0; i < n_vertices; i++) {
+		removed_edge[i] = new bool[n_vertices];
+	}
+
+	for (int i = 0; i < n_vertices; i++) {
+		for (int j = 0; j < n_vertices; j++) {
+			removed_edge[i][j] = 0;
+		}
+	}
+
+}
+
+
+
 MultiwayCut::~MultiwayCut()
 {
 	/* memory deallocation of weight_matrix */

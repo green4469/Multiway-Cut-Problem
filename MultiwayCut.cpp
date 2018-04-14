@@ -158,7 +158,7 @@ MultiwayCut::MultiwayCut(void)
 			removed_edge[i][j] = 0;
 		}
 	}
-
+	delete[] group;
 }
 
 

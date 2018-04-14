@@ -16,18 +16,11 @@ int main(void) {
 		ifstream fin;
 		string in_file = "MCP_IN\\MCP_IN_";
 		file_num++;
-		string number;
-		if (file_num / 10 == 0) {
-			number = "000" + to_string(file_num);
-		}
-		else if (file_num / 100 == 0) {
-			number = "00" + to_string(file_num);
-		}
-		else if (file_num / 1000 == 0) {
-			number = "0" + to_string(file_num);
-		}
-		else {
-			number = to_string(file_num);
+		int parsing = file_num;
+		string number = "0000000";
+		for (int i = 0; parsing > 0; i++) {
+			number[6 - i] = (parsing % 10) + '0';
+			parsing /= 10;
 		}
 		in_file.append(number).append(".TXT");
 		fin.open(in_file, ifstream::in);
@@ -38,18 +31,11 @@ int main(void) {
 	/* loop until different between relaxed solution & rounded solution	*/
 	do {
 		string in_file = "MCP_IN\\MCP_IN_";
-		string number;
-		if (file_num / 10 == 0) {
-			number = "000" + to_string(file_num);
-		}
-		else if (file_num / 100 == 0) {
-			number = "00" + to_string(file_num);
-		}
-		else if (file_num / 1000 == 0) {
-			number = "0" + to_string(file_num);
-		}
-		else {
-			number = to_string(file_num);
+		string number = "0000000";
+		int parsing = file_num;
+		for (int i = 0; parsing > 0; i++) {
+			number[6 - i] = (parsing % 10) + '0';
+			parsing /= 10;
 		}
 		in_file.append(number).append(".TXT");
 		string out_file_summary = "MCP_OUT\\MCP_OUT.TXT";
@@ -64,12 +50,15 @@ int main(void) {
 		LP = a->LP_solver();
 		RS = a->rounding_alg();
 		
-		if (CompareDoubleUlps(LP, RS) != 0) {
+		if (true) { //CompareDoubleUlps(LP, RS) != 0) {
 			ofstream fout_result(out_file, ofstream::out | ofstream::app);
 			ofstream fout_one(in_file);
 			ofstream fout_summary(out_file_summary, ofstream::out | ofstream::app);
 			double duality_gap;
-			duality_gap = RS / LP;
+			if (CompareDoubleUlps(RS, 0) == 0 && CompareDoubleUlps(LP, 0) == 0)
+				duality_gap = 1;
+			else
+				duality_gap = RS / LP;
 			/* summary file */
 			fout_summary << file_num << "," << a->n_vertices << "," << a->n_terminals << "," << duality_gap << endl;
 			/* each input file */
@@ -87,7 +76,7 @@ int main(void) {
 				}
 			}
 			/* result file */
-			fout_result << file_num << "," << LP << "," << RS << "," << RS / LP;
+			fout_result << file_num << "," << LP << "," << RS << "," << duality_gap;
 			for (int i = 0; i < a->n_vertices; i++) {
 				for (int j = 0; j < a->n_vertices; j++) {
 					if (a->removed_edge[i][j] == true) {
@@ -145,7 +134,7 @@ int main(void) {
 		//cout << "optimal_solution: " << a.get_optimal_solution() << endl;
 		cout << "rounded_solution: " << RS << endl;
 		delete a;
-	} while (1);// CompareDoubleUlps(LP, RS) == 0);
+	} while (iteration< 3000000);// CompareDoubleUlps(LP, RS) == 0);
 
 	/*
 	MultiwayCut a;

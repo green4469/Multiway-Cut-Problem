@@ -15,7 +15,7 @@
 #include <time.h>       /* time */
 #include <fstream>
 
-#define MAX_N_VERTICES 20
+#define MAX_N_VERTICES 50
 #define WEIGHT_MAX 100
 using namespace std;
 

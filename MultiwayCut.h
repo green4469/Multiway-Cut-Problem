@@ -52,7 +52,7 @@ public:
 
 //public:
 	/* Constructor */
-	MultiwayCut(void);
+	MultiwayCut(int argc, char *argv[]);
 
 	/* Deconstructor */
 	~MultiwayCut(void);

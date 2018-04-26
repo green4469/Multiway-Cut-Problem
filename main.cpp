@@ -1,13 +1,62 @@
 #include "MultiwayCut.h"
 
-int main(void) {
+int main(int argc, char* argv[]) {
+	/* LP saves the relaxed solution, RS saves the rounded solution */
 	double LP;
 	double RS;
-	int iteration = 0;
 
+	if (argc == 2) {
+		ofstream of("output.txt");
+
+		MultiwayCut *MC = new MultiwayCut(argc, argv);
+
+		LP = MC->LP_solver();
+		RS = MC->rounding_alg();
+		cout << "relaxed solution: " << LP << endl;
+		cout << "rounded solution: " << RS << endl;
+
+		of << "Input graph" << endl;
+		for (int i = 0; i < MC->n_vertices; i++) {
+			for (int j = 0; j < MC->n_vertices; j++) {
+				of << MC->weight_matrix[i][j] << '\t';
+			}
+			of << endl;
+		}
+
+		of << endl;
+
+		of << "Coordinate values of vertices on simplex" << endl;
+		for (int i = 0; i < MC->n_vertices; i++) {
+			of << i << " = (";
+			for (int j = 0; j < MC->n_terminals - 1; j++) {
+				of << MC->simplex_vertices[i][j] << ", ";
+			}
+			of << MC->simplex_vertices[i][MC->n_terminals-1] << ')' << endl;
+		}
+
+		of << endl;
+
+		of << "Removed edges" << endl;
+		for (int i = 0; i < MC->n_vertices; i++) {
+			for (int j = 0; j < MC->n_vertices; j++) {
+				of << MC->removed_edge[i][j] << ' ';
+			}
+			of << endl;
+		}
+	}
+
+	/*
+	MultiwayCut a;
+	LP = a.LP_solver();
+	RS = a.rounding_alg();
+	cout << "relaxed solution: " << LP << endl;
+	cout << "rounded solution: " << RS << endl;
+	*/
+
+
+	/* loop until different between relaxed solution & rounded solution	(random-generation)
 	ofstream of("output.txt");
-
-	/* loop until different between relaxed solution & rounded solution	*/
+	int iteration = 0;
 	do {
 		srand((unsigned)time(NULL) + (unsigned)iteration * 10);
 		cout << ++iteration << "th case" << endl << endl;
@@ -61,14 +110,8 @@ int main(void) {
 		delete a;
 	} while (CompareDoubleUlps(LP,RS) == 0);
 
-	/*
-	MultiwayCut a;
-	LP = a.LP_solver();
-	RS = a.rounding_alg();
-	cout << "relaxed solution: " << LP << endl;
-	cout << "rounded solution: " << RS << endl;
+	cout << "Different!" << endl;
 	*/
 
-	//cout << "Different!" << endl;
 	return 0;
 }

@@ -5,113 +5,43 @@ int main(int argc, char* argv[]) {
 	double LP;
 	double RS;
 
+	/* If no argument, return with error message */
+	if (argc == 1) {
+		cout << "You need to give a parameter!" << endl;
+		cout << "For example, './MultiwayCut 0001.txt'" << endl;
+		return -1;
+	}
+
 	if (argc == 2) {
-		ofstream of("output.txt");
+		/* output files */
+		ofstream fout_simplex("MCP_OUT\\MCP_OUT_SIMPLEX.TXT");
+		ofstream fout_summary("MCP_OUT\\MCP_OUT.TXT", ofstream::out | ofstream::app);
+		ofstream fout_edge_cut("MCP_OUT\\MCP_OUT_EDGE_CUT.TXT", ofstream::out | ofstream::app);
 
 		MultiwayCut *MC = new MultiwayCut(argc, argv);
-
 		LP = MC->LP_solver();
 		RS = MC->rounding_alg();
 		cout << "relaxed solution: " << LP << endl;
 		cout << "rounded solution: " << RS << endl;
 
-		of << "Input graph" << endl;
+		/* simplex output */
+		fout_simplex << argv[1] << endl;
 		for (int i = 0; i < MC->n_vertices; i++) {
-			for (int j = 0; j < MC->n_vertices; j++) {
-				of << MC->weight_matrix[i][j] << '\t';
-			}
-			of << endl;
-		}
-
-		of << endl;
-
-		of << "Coordinate values of vertices on simplex" << endl;
-		for (int i = 0; i < MC->n_vertices; i++) {
-			of << i << " = (";
+			fout_simplex << i << " = (";
 			for (int j = 0; j < MC->n_terminals - 1; j++) {
-				of << MC->simplex_vertices[i][j] << ", ";
+				fout_simplex << MC->simplex_vertices[i][j] << ", ";
 			}
-			of << MC->simplex_vertices[i][MC->n_terminals-1] << ')' << endl;
+			fout_simplex << MC->simplex_vertices[i][MC->n_terminals-1] << ')' << endl;
 		}
+		fout_simplex << endl;
 
-		of << endl;
+		/* summary output */
+		fout_summary << file_num << "," << MC->n_vertices << "," << MC->n_terminals << "," << RS/LP << endl;
 
-		of << "Removed edges" << endl;
-		for (int i = 0; i < MC->n_vertices; i++) {
-			for (int j = 0; j < MC->n_vertices; j++) {
-				of << MC->removed_edge[i][j] << ' ';
-			}
-			of << endl;
-		}
+		/* edge_cut output */
+
+		delete MC;
 	}
-
-	/*
-	MultiwayCut a;
-	LP = a.LP_solver();
-	RS = a.rounding_alg();
-	cout << "relaxed solution: " << LP << endl;
-	cout << "rounded solution: " << RS << endl;
-	*/
-
-
-	/* loop until different between relaxed solution & rounded solution	(random-generation)
-	ofstream of("output.txt");
-	int iteration = 0;
-	do {
-		srand((unsigned)time(NULL) + (unsigned)iteration * 10);
-		cout << ++iteration << "th case" << endl << endl;
-		MultiwayCut *a = new MultiwayCut;
-		LP = a->LP_solver();
-		RS = a->rounding_alg();
-
-		if (CompareDoubleUlps(LP, RS) != 0) {
-			of << "LP's objective value : " << LP << endl;
-			of << "Rounded objective value : " << RS << endl;
-			of << "Weight Matrix" << endl;
-			for (int i = 0; i < a->n_vertices; i++) {
-				for (int j = 0; j < a->n_vertices; j++) {
-					of << a->weight_matrix[i][j] << '\t';
-				}
-				of << endl;
-			}
-
-			of << "Edge Matrix" << endl;
-			for (int i = 0; i < a->n_vertices; i++) {
-				for (int j = 0; j < a->n_vertices; j++) {
-					of << a->edge_matrix[i][j] << '\t';
-				}
-				of << endl;
-			}
-
-			of << "Removed edge " << endl;
-			for (int i = 0; i < a->n_vertices; i++) {
-				for (int j = 0; j < a->n_vertices; j++) {
-					of << a->removed_edge[i][j] << '\t';
-				}
-				of << endl;
-			}
-
-			of << "assigned terminal (lu) " << endl;
-			for (int i = 0; i < a->n_vertices; i++) {
-				of << a->assigned_terminal[i] << '\t';
-			}
-			of << endl;
-
-			of << "Terminals" << endl;
-			for (int i = 0; i < a->n_terminals; i++) {
-				of << a->terminals[i] << '\t';
-			}
-			of << endl;
-		}
-
-		cout << "relaxed_solution: " << LP << endl;
-		//cout << "optimal_solution: " << a.get_optimal_solution() << endl;
-		cout << "rounded_solution: " << RS << endl;
-		delete a;
-	} while (CompareDoubleUlps(LP,RS) == 0);
-
-	cout << "Different!" << endl;
-	*/
 
 	return 0;
 }

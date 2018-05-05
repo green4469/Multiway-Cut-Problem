@@ -5,6 +5,8 @@ int main(int argc, char* argv[]) {
 	double LP;
 	double RS;
 
+	srand((unsigned)time(NULL));
+
 	/* If no argument, return with error message */
 	if (argc == 1) {
 		cout << "You need to give a parameter!" << endl;
@@ -24,7 +26,18 @@ int main(int argc, char* argv[]) {
 		cout << "relaxed solution: " << LP << endl;
 		cout << "rounded solution: " << RS << endl;
 
+		cout << argv[1] << endl;
+		for (int i = 0; i < MC->n_vertices; i++) {
+			cout << i << " = (";
+			for (int j = 0; j < MC->n_terminals - 1; j++) {
+				cout << MC->simplex_vertices[i][j] << ", ";
+			}
+			cout << MC->simplex_vertices[i][MC->n_terminals - 1] << ')' << endl;
+		}
+		cout << endl;
+
 		/* simplex output */
+		/*
 		fout_simplex << argv[1] << endl;
 		for (int i = 0; i < MC->n_vertices; i++) {
 			fout_simplex << i << " = (";
@@ -34,9 +47,9 @@ int main(int argc, char* argv[]) {
 			fout_simplex << MC->simplex_vertices[i][MC->n_terminals-1] << ')' << endl;
 		}
 		fout_simplex << endl;
-
+		*/
 		/* summary output */
-		fout_summary << file_num << "," << MC->n_vertices << "," << MC->n_terminals << "," << RS/LP << endl;
+		//fout_summary << file_num << "," << MC->n_vertices << "," << MC->n_terminals << "," << RS/LP << endl;
 
 		/* edge_cut output */
 

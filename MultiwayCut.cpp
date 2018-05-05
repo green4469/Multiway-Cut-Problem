@@ -360,8 +360,6 @@ double MultiwayCut::post_process(void)
 
 double MultiwayCut::rounding_alg_exp(void)
 {
-	cout << "Exponential Clock Algorithm" << endl;
-
 	/* Exponential Clock - Terminal sampling */
 	double *terminal_clock;
 	terminal_clock = new double[n_terminals];
@@ -422,8 +420,6 @@ double MultiwayCut::rounding_alg(void)
 {
 	double rounded_solution = 0.0;
 	double r = (double)rand() / RAND_MAX;
-	cout << "r-value : " << r << endl;
-
 
 	if (r <= 2.0 / 3.0) {
 		rounded_solution = MultiwayCut::rounding_alg_exp();

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <time.h>       /* time */
 #include <fstream>
+#include <chrono>
 
 #define MAX_N_VERTICES 100
 #define WEIGHT_MAX 100

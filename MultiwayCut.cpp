@@ -278,10 +278,10 @@ double MultiwayCut::LP_solver(void)
 	}
 	double objval = solver.getObjValue();
 	/* delete the model and the objective */
+	/*
 	solver.end();
 	model.end();
 	obj.end();
-	/* delete all arrays (u, z, terminalRanges, vertexRanges, l1Ranges1, l1Ranges2)*/
 	for (int i = 0; i < n_vertices; ++i) {
 		for (int j = 0; j < n_vertices; ++j) {
 			//l1Ranges1[i][j].endElements();
@@ -320,7 +320,10 @@ double MultiwayCut::LP_solver(void)
 	}
 	else
 		return objval;
+		*/
+
 }
+
 double MultiwayCut::post_process(void)
 {
 	/* For each edge e(u,v), if u and v are not belonged to the same terminal, remove that edge */
@@ -360,17 +363,24 @@ double MultiwayCut::post_process(void)
 
 double MultiwayCut::rounding_alg_exp(void)
 {
+	cout << "Exponential Clock Algorithm" << endl;
 	/* Exponential Clock - Terminal sampling */
 	double *terminal_clock;
 	terminal_clock = new double[n_terminals];
 
 	/* generation of the expoential clocks of the terminals */
-	std::default_random_engine generator;
+	int seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed);
 
+	cout << "terminal_clock values" << endl;
+	std::exponential_distribution<double> distribution(1.0);
 	for (int i = 0; i < n_terminals; ++i) {  // i for terminals
-		std::exponential_distribution<double> distribution(1.0);
 		terminal_clock[i] = distribution(generator);  // terminal_clock[terminals[i]] denotes ith terminal's exponential clock, terminal[i] denotes ith terminal
+		
+		cout << terminal_clock[i] << ' ';
 	}
+	cout << endl;
+
 
 
 	/* Traversing all simplex vertices, find minimum Zi / Ui. then assign the vertice to ith terminal */
